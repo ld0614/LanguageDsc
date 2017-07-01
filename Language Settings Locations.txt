@@ -1,0 +1,20 @@
+[Int]LocationID: HKCU:\Control Panel\International\Geo
+[String]MUILanguage: \Control Panel\Desktop\PreferredUILanguages
+[String]MUIFallbackLanguage:\Control Panel\Desktop\LanguageConfiguration\$MUILanguage (String) ie en-GB:en-US
+[String]SystemLocale: get-winSystemLocale
+[String[]]AddInputLanguage: \Control Panel\International\User Profile\Languages (Array)
+[String[]]RemoveInputLanguage: \Control Panel\International\User Profile\Languages (Array)
+[String]UserLocale: \Control Panel\International\LocaleName (String)
+[Boolean]CopySystem:
+[Boolean]CopyNewUser:
+
+Local GEO: HKCU:\Control Panel\International\Geo (Int)
+System GEO: HKEY_Users:\S-1-5-18\Control Panel\International\Geo (int)
+New User GEO: HKEY_Users:\.DEFAULT\Control Panel\International\Geo (Int)
+
+Local Language: HKCU:\Control Panel\International\User Profile\Languages (Array)
+Local Locale: HKCU:\Control Panel\International\LocaleName (String)
+
+System Locale: get-winSystemLocal
+
+control.exe intl.cpl,, /F:"c:\users\administrator\desktop\local.txt"

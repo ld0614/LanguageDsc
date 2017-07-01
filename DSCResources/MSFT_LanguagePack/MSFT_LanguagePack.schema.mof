@@ -1,0 +1,9 @@
+
+[ClassVersion("1.0.0.0"), FriendlyName("LanguagePack")]
+class MSFT_LanguagePack : OMI_BaseResource
+{
+    [Key] String LanguagePackName;
+    [Write] String LanguagePackLocation;
+    [Write, ValueMap{"Present","Absent"}, Values{"Present","Absent"}] String Ensure;
+};
+

@@ -46,13 +46,19 @@ try
     InModuleScope 'MSFT_Language' {
         #Define Static Variables used within all Tests
         $script:DSCResourceName = 'MSFT_Language'
-        $CurrentLocation = '242'
-        $CurrentUILanguage = 'en-GB'
-        $CurrentUIFallbackLanguage = 'en-US'
-        $CurrentSystemLocale = 'en-GB'
+        $CurrentLocation = "242"
+        $CurrentUILanguage = "en-GB"
+        $CurrentUIFallbackLanguage = "en-US"
+        $CurrentSystemLocale = "en-GB"
         $CurrentInstalledLanguages = @("en-GB","en-US")
         $CurrentUserLocale = "en-GB"
+        $LanguageToRemove = "en-US"
         $NewLocation = 58
+        $NewUILanguage = "de-DE"
+        $NewFallbackLanguage = "en-GB"
+        $NewSystemLocale = "de-DE"
+        $LanguageToInstall = "de-DE"
+        $NewUserLocale = "de-DE"
         $ValidLocationConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
     <gs:UserList>
         <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>
@@ -73,7 +79,27 @@ try
         <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
     </gs:UserLocale>
 </gs:GlobalizationServices>
-'
+        '
+        $ValidRemovalConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
+    <gs:UserList>
+        <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>
+    </gs:UserList>
+    <gs:LocationPreferences>
+        <gs:GeoID Value="58"/>
+    </gs:LocationPreferences>
+    <gs:MUILanguagePreferences>
+        <gs:MUILanguage Value="en-GB"/>
+        <gs:MUIFallback Value="en-US"/>
+    </gs:MUILanguagePreferences>
+    <gs:SystemLocale Name="en-GB"/>
+    <gs:InputPreferences>
+        <gs:InputLanguageID Action="remove" ID="en-US"/>
+    </gs:InputPreferences>
+    <gs:UserLocale>
+        <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
+    </gs:UserLocale>
+</gs:GlobalizationServices>
+        '
 
         # TODO: Complete the Describe blocks below and add more as needed.
         # The most common method for unit testing is to test by function. For more information
@@ -353,15 +379,16 @@ try
                 }
             }
 
-            Context 'Require changes to all accounts as location has changed' {
+            Context 'Require changes to all accounts as everything has changed' {
                 $TestState = Test-TargetResource `
                     -IsSingleInstance "Yes" `
                     -LocationID $NewLocation `
-                    -MUILanguage $CurrentUILanguage `
-                    -MUIFallbackLanguage $CurrentUIFallbackLanguage `
-                    -SystemLocale $CurrentSystemLocale `
-                    -AddInputLanguages $CurrentInstalledLanguages `
-                    -UserLocale $CurrentUserLocale `
+                    -MUILanguage $NewUILanguage `
+                    -MUIFallbackLanguage $NewFallbackLanguage `
+                    -SystemLocale $NewSystemLocale `
+                    -AddInputLanguages $LanguageToInstall `
+                    -RemoveInputLanguages $LanguageToRemove `
+                    -UserLocale $NewUserLocale `
                     -CopySystem $true `
                     -CopyNewUser $true
                 
@@ -370,11 +397,12 @@ try
                         Test-TargetResource `
                             -IsSingleInstance "Yes" `
                             -LocationID $NewLocation `
-                            -MUILanguage $CurrentUILanguage `
-                            -MUIFallbackLanguage $CurrentUIFallbackLanguage `
-                            -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
-                            -UserLocale $CurrentUserLocale `
+                            -MUILanguage $NewUILanguage `
+                            -MUIFallbackLanguage $NewFallbackLanguage `
+                            -SystemLocale $NewSystemLocale `
+                            -AddInputLanguages $LanguageToInstall `
+                            -RemoveInputLanguages $LanguageToRemove `
+                            -UserLocale $NewUserLocale `
                             -CopySystem $true `
                             -CopyNewUser $true
                     } | Should Not Throw
@@ -427,6 +455,42 @@ try
 
                 It 'Should return true'{
                     $TestState | Should Be $true
+                }
+            }
+
+            Context 'Require Removal of Language' {
+                $TestState = Test-TargetResource `
+                    -IsSingleInstance "Yes" `
+                    -LocationID $NewLocation `
+                    -MUILanguage $CurrentUILanguage `
+                    -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                    -SystemLocale $CurrentSystemLocale `
+                    -RemoveInputLanguages $LanguageToRemove `
+                    -UserLocale $CurrentUserLocale `
+                    -CopySystem $true `
+                    -CopyNewUser $true
+                
+                It 'Should not throw exception' {
+                    {
+                        Test-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -LocationID $NewLocation `
+                            -MUILanguage $CurrentUILanguage `
+                            -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                            -SystemLocale $CurrentSystemLocale `
+                            -RemoveInputLanguages $LanguageToRemove `
+                            -UserLocale $CurrentUserLocale `
+                            -CopySystem $true `
+                            -CopyNewUser $true
+                    } | Should Not Throw
+                }
+
+                It 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'Should return false'{
+                    $TestState | Should Be $false
                 }
             }
         }
@@ -491,10 +555,54 @@ try
                 }
 
                 #Useful when debugging XML Output
-                #Write-Verbose "Known File Content" -Verbose:$true
-                #Write-Verbose $ValidLocationConfig -Verbose:$true
-                #Write-Verbose "Result File Content" -Verbose:$true
-                #Write-Verbose $fileContent -Verbose:$true
+                Write-Verbose "Known File Content" -Verbose:$true
+                Write-Verbose $ValidLocationConfig -Verbose:$true
+                Write-Verbose "Result File Content" -Verbose:$true
+                Write-Verbose $fileContent -Verbose:$true
+
+                It 'Should call Start-Process' {
+                    Assert-MockCalled `
+                        -CommandName Start-Process `
+                        -ModuleName $($script:DSCResourceName) `
+                        -Exactly 1
+                }
+            }
+
+            Context 'Remove Language' {
+                                It 'Should not throw exception' {
+                    {
+                        Set-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -LocationID $NewLocation `
+                            -MUILanguage $CurrentUILanguage `
+                            -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                            -SystemLocale $CurrentSystemLocale `
+                            -RemoveInputLanguages $LanguageToRemove `
+                            -UserLocale $CurrentUserLocale `
+                            -CopySystem $true `
+                            -CopyNewUser $true
+                    } | Should not Throw
+                }
+                $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
+
+                It 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'File should have been created'{
+                    Test-Path -Path "$env:TEMP\Locale.xml" | Should be $true
+                }
+
+                It 'File Content should match known good config'{
+                    #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
+                    ($fileContent.Replace(' ','').Replace("`t","") -eq $ValidRemovalConfig.Replace(' ','').Replace("`t","")) | Should be $true
+                }
+
+                #Useful when debugging XML Output
+                Write-Verbose "Known File Content" -Verbose:$true
+                Write-Verbose $ValidRemovalConfig -Verbose:$true
+                Write-Verbose "Result File Content" -Verbose:$true
+                Write-Verbose $fileContent -Verbose:$true
 
                 It 'Should call Start-Process' {
                     Assert-MockCalled `

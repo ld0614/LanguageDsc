@@ -2,7 +2,7 @@
 # Integration Test Config Template Version: 1.0.0
 configuration MSFT_Language_Config {
 
-    Import-DscResource -ModuleName Language
+    Import-DscResource -ModuleName LanguageDsc
     node localhost {
 
         LanguagePack Integration_Test {

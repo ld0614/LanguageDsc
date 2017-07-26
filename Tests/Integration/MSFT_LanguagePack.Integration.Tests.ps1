@@ -27,7 +27,7 @@ try
     $configFile = Join-Path -Path $PSScriptRoot -ChildPath "$($script:DSCResourceName).config.ps1"
     . $configFile
 
-    Describe "$($script:DSCResourceName)_Integration" {
+    Describe "$($script:DSCResourceName)_Integration" -Tag "Integration" {
         #region DEFAULT TESTS
         It 'Should compile and apply the MOF without throwing' {
             {
@@ -41,10 +41,11 @@ try
             { Get-DscConfiguration -Verbose -ErrorAction Stop } | Should Not throw
         }
         #endregion
-
-        It 'Should have set the resource and all the parameters should match' {
-            $currentConfig = Get-TargetResource -LanguagePackName "en-GB" -Verbose
-            $currentConfig.Ensure | Should Be $true
+        InModuleScope 'MSFT_Language' {
+            It 'Should have set the resource and all the parameters should match' {
+                $currentConfig = Get-TargetResource -LanguagePackName "en-GB" -Verbose
+                $currentConfig.Ensure | Should Be $true
+            }
         }
     }
     #endregion

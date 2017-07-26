@@ -24,7 +24,7 @@ build: false
 
 test_script:
     - ps: |
-        Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo
+        Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "Integration"
     
 #---------------------------------# 
 #      deployment configuration   # 

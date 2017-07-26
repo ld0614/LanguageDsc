@@ -18,7 +18,7 @@ Function Get-TargetResource
     [OutputType([System.Collections.Hashtable])]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $LanguagePackName
     )
@@ -67,13 +67,15 @@ Function Set-TargetResource
     [CmdletBinding()]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $LanguagePackName,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $LanguagePackLocation,
 
+        [Parameter(Mandatory = $false)]
         [ValidateSet("Present","Absent")]
         [System.String]
         $Ensure="Present"
@@ -132,9 +134,11 @@ Function Test-TargetResource
         [System.String]
         $LanguagePackName,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $LanguagePackLocation,
 
+        [Parameter(Mandatory = $false)]
         [ValidateSet("Present","Absent")]
         [System.String]
         $Ensure="Present"

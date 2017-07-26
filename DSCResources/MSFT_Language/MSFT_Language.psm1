@@ -13,7 +13,7 @@ Function Get-TargetResource
     [OutputType([System.Collections.Hashtable])]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [ValidateSet("Yes")]
         [System.String]
         $IsSingleInstance
@@ -93,35 +93,44 @@ Function Set-TargetResource
     [CmdletBinding()]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [ValidateSet("Yes")]
         [System.String]
         $IsSingleInstance,
 
+        [Parameter(Mandatory = $false)]
         [System.Int32]
         $LocationID,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $MUILanguage,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $MUIFallbackLanguage,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $SystemLocale,
 
+        [Parameter(Mandatory = $false)]
         [System.String[]]
         $AddInputLanguages,
 
+        [Parameter(Mandatory = $false)]
         [System.String[]]
         $RemoveInputLanguages,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $UserLocale,
 
+        [Parameter(Mandatory = $false)]
         [System.Boolean]
         $CopySystem =$true,
 
+        [Parameter(Mandatory = $false)]
         [System.Boolean]
         $CopyNewUser=$true
     )
@@ -264,37 +273,46 @@ Function Test-TargetResource
     [OutputType([System.Boolean])]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [ValidateSet("Yes")]
         [System.String]
         $IsSingleInstance,
 
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.Int32]
         $LocationID,
 
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $MUILanguage,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $MUIFallbackLanguage,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $SystemLocale,
 
+        [Parameter(Mandatory = $false)]
         [System.String[]]
         $AddInputLanguages,
 
+        [Parameter(Mandatory = $false)]
         [System.String[]]
         $RemoveInputLanguages,
 
+        [Parameter(Mandatory = $false)]
         [System.String]
         $UserLocale,
 
+        [Parameter(Mandatory = $false)]
         [System.Boolean]
         $CopySystem,
 
+        [Parameter(Mandatory = $false)]
         [System.Boolean]
         $CopyNewUser
     )

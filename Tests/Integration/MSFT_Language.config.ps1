@@ -5,7 +5,7 @@ configuration MSFT_Language_Config {
     Import-DscResource -ModuleName LanguageDsc
     node localhost {
 
-        LanguagePack Integration_Test {
+        Language Integration_Test {
             IsSingleInstance = "Yes" 
             LocationID = 242 
             MUILanguage = "en-GB" 

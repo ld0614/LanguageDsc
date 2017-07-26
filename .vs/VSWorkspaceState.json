@@ -2,12 +2,13 @@
   "ExpandedNodes": [
     "",
     "\\DSCResources",
+    "\\DSCResources\\MSFT_Language",
     "\\DSCResources\\MSFT_LanguagePack",
     "\\Examples",
     "\\Tests",
     "\\Tests\\Integration",
     "\\Tests\\Unit"
   ],
-  "SelectedNode": "\\Tests\\Integration\\MSFT_LanguagePack.Integration.Tests.ps1",
+  "SelectedNode": "\\DSCResources\\MSFT_LanguagePack\\MSFT_LanguagePack.psm1",
   "PreviewInSolutionExplorer": false
 }

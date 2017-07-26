@@ -13,7 +13,7 @@ Write-Output @('clone','https://github.com/PowerShell/DscResource.Tests.git',"'"
 if ( (-not (Test-Path -Path (Join-Path -Path $script:moduleRoot -ChildPath 'DSCResource.Tests'))) -or `
      (-not (Test-Path -Path (Join-Path -Path $script:moduleRoot -ChildPath 'DSCResource.Tests\TestHelper.psm1'))) )
 {
-    & git @('clone','https://github.com/PowerShell/DscResource.Tests.git',(Join-Path -Path $script:moduleRoot -ChildPath '\DSCResource.Tests'),'--verbose')
+    & git @('clone','https://github.com/PowerShell/DscResource.Tests.git',(Join-Path -Path $script:moduleRoot -ChildPath 'DSCResource.Tests'),'--verbose')
 }
 
 Import-Module -Name (Join-Path -Path $script:moduleRoot -ChildPath (Join-Path -Path 'DSCResource.Tests' -ChildPath 'TestHelper.psm1')) -Force
@@ -26,14 +26,14 @@ $TestEnvironment = Initialize-TestEnvironment `
 #endregion HEADER
 
 function Invoke-TestSetup {
-    #Remove Temp file before starting testing incase it already exists
+    #Remove Temp file before starting testing encase it already exists
     Remove-Item -Path "$env:TEMP\Locale.xml" -Force -ErrorAction SilentlyContinue
 }
 
 function Invoke-TestCleanup {
     Restore-TestEnvironment -TestEnvironment $TestEnvironment
 
-    #Remove Temp file after testing to keep the enviroment clean
+    #Remove Temp file after testing to keep the environment clean
     Remove-Item -Path "$env:TEMP\Locale.xml" -Force -ErrorAction SilentlyContinue
 }
 
@@ -165,7 +165,7 @@ try
                 -MockWith { $CurrentUserLocale } `
                 -Verifiable
 
-            Context 'Get current Langauge State' {
+            Context 'Get current Language State' {
                 $CurrentState = Get-TargetResource `
                     -IsSingleInstance "Yes"
 

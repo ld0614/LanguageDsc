@@ -1,4 +1,4 @@
-﻿$LanguagePackName = New-xDscResourceProperty -Name "LanguagePackName" -Type String -Attribute Key
+$LanguagePackName = New-xDscResourceProperty -Name "LanguagePackName" -Type String -Attribute Key
 $LanguagePackLocation = New-xDscResourceProperty -Name "LanguagePackLocation" -Type String -Attribute Write
 $Ensure = New-xDscResourceProperty –Name Ensure -Type String -Attribute Write –ValidateSet “Present”, “Absent”
 

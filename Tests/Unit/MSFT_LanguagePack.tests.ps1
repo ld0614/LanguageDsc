@@ -40,6 +40,7 @@ try
 
     InModuleScope 'MSFT_LanguagePack' {
         #Define Static Variables used within all Tests
+        $script:DSCModuleName      = 'LanguageDsc'
         $script:DSCResourceName = 'MSFT_LanguagePack'
         $ExistingLanguagePack = 'en-US'
         $NewLanguagePack = 'en-GB'
@@ -56,7 +57,7 @@ try
         Describe 'Schema' {
 
             Context 'Check Variable requirements' {
-                $systemLocaleResource = Get-DscResource -Name LanguagePack
+                $systemLocaleResource = Get-DscResource -Name LanguagePack -Module $script:DSCModuleName
 
                 it 'LanguagePackName should be mandatory.' {
                 
@@ -64,13 +65,14 @@ try
                 }
 
                 it 'LanguagePackLocation should not be mandatory.' {
-                    $systemLocaleResource = Get-DscResource -Name LanguagePack
                     $systemLocaleResource.Properties.Where{$_.Name -eq 'LanguagePackLocation'}.IsMandatory | should be $false
                 }
 
-                it 'Ensure should not be mandatory and only have two values.' {
-                    $systemLocaleResource = Get-DscResource -Name LanguagePack
+                it 'Ensure should not be mandatory' {
                     $systemLocaleResource.Properties.Where{$_.Name -eq 'Ensure'}.IsMandatory | should be $false
+                }
+
+                it 'Ensure should only have two values' {
                     $systemLocaleResource.Properties.Where{$_.Name -eq 'Ensure'}.Values | should be @('Absent','Present')
                 }
             }

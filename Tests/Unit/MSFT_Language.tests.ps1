@@ -475,6 +475,7 @@ try
                             -CopyNewUser $true
                     } | Should not Throw
                 }
+                $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
 
                 It 'All Mocks should have run'{
                     {Assert-VerifiableMocks} | should not throw
@@ -485,13 +486,15 @@ try
                 }
 
                 It 'File Content should match known good config'{
-                    $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
-                    ($fileContent -eq $ValidLocationConfig) | Should be $true
-                    Write-Verbose "Known File Content"
-                    Write-Verbose $ValidLocationConfig
-                    Write-Verbose "Result File Content"
-                    Write-Verbose $fileContent
+                    #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
+                    ($fileContent.Replace(' ','').Replace("`t","") -eq $ValidLocationConfig.Replace(' ','').Replace("`t","")) | Should be $true
                 }
+
+                #Useful when debugging XML Output
+                #Write-Verbose "Known File Content" -Verbose:$true
+                #Write-Verbose $ValidLocationConfig -Verbose:$true
+                #Write-Verbose "Result File Content" -Verbose:$true
+                #Write-Verbose $fileContent -Verbose:$true
 
                 It 'Should call Start-Process' {
                     Assert-MockCalled `

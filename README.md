@@ -2,6 +2,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/wfuldlhe53v09eca/branch/master?svg=true)](https://ci.appveyor.com/project/ld0614/languagedsc/branch/master)
 
+[![codecov](https://codecov.io/gh/ld0614/LanguageDsc/branch/master/graph/badge.svg)](https://codecov.io/gh/ld0614/LanguageDsc)
+
 This Module is designed to manage language settings on Windows Server operating systems.  It allows for the installation and removal of language packs as well as modification of the User and System Locales, Keyboard layouts and display language.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).

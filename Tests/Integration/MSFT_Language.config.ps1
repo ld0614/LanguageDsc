@@ -6,16 +6,16 @@ configuration MSFT_Language_Config {
     node localhost {
 
         LanguagePack Integration_Test {
-            IsSingleInstance "Yes" 
-            LocationID 242 
-            MUILanguage "en-GB" 
-            MUIFallbackLanguage "en-US"
-            SystemLocale "en-GB" 
-            AddInputLanguages @("en-GB") 
-            RemoveInputLanguages @("en-US")
-            UserLocale "en-GB"
-            CopySystem $true 
-            CopyNewUser $true
+            IsSingleInstance = "Yes" 
+            LocationID = 242 
+            MUILanguage = "en-GB" 
+            MUIFallbackLanguage = "en-US"
+            SystemLocale = "en-GB" 
+            AddInputLanguages = @("en-GB") 
+            RemoveInputLanguages = @("en-US")
+            UserLocale = "en-GB"
+            CopySystem = $true 
+            CopyNewUser = $true
         }
     }
 }

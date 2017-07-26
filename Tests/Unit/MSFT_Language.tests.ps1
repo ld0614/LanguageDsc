@@ -487,6 +487,10 @@ try
                 It 'File Content should match known good config'{
                     $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
                     ($fileContent -eq $ValidLocationConfig) | Should be $true
+                    Write-Verbose "Known File Content"
+                    Write-Verbose $ValidLocationConfig
+                    Write-Verbose "Result File Content"
+                    Write-Verbose $fileContent
                 }
 
                 It 'Should call Start-Process' {

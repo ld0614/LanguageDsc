@@ -1,6 +1,6 @@
 #Installs the latest version of Chrome in the language specified in the parameter Language.
 
-Configuration Sample_InstallLanguagePack
+Configuration Example
 {
     
     Import-DscResource -module LanguageDsc

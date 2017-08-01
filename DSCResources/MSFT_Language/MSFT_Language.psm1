@@ -22,11 +22,29 @@ Function Get-TargetResource
     $CULocationID = Get-ItemPropertyValue "HKCU:\Control Panel\International\Geo\" -Name "Nation"
     Write-Verbose "Current User LocationID = $CULocationID"
 
-    $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\" -Name "PreferredUILanguages"
+    #This is only set if the language has ever been changed, if to it defaults to system preferred
+    try
+    {
+        $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\" -Name "PreferredUILanguages"
+    }
+    catch
+    {
+        $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\MuiCached\" -Name "MachinePreferredUILanguages"
+    }
+    #Assume there is only 1 active MUI installed
+    [String]$CUMUILanguage = $CUMUILanguage[0]
     Write-Verbose "Current User MUILanguage = $CUMUILanguage"
 
-    $CUMUIFallbackLanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\LanguageConfiguration" -Name "$CUMUILanguage"
-    Write-Verbose "Current User MUIFallbackLanguage = $CUMUIFallbackLanguage"
+    try
+    {
+        $CUMUIFallbackLanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\LanguageConfiguration\" -Name "$CUMUILanguage" -ErrorAction Stop
+        [String]$CUMUIFallbackLanguage = $CUMUIFallbackLanguage[0]
+        Write-Verbose "Current User MUIFallbackLanguage = $CUMUIFallbackLanguage"
+    }
+    catch
+    {
+        Write-Verbose "Current User does not have a fallback language"
+    }
 
     $SystemLocale = Get-WinSystemLocale
     Write-Verbose "Current System Locale = $SystemLocale"
@@ -42,7 +60,7 @@ Function Get-TargetResource
     LocationID = [System.Int32]$CULocationID
     MUILanguage = [System.String]$CUMUILanguage
     MUIFallbackLanguage = [System.String]$CUMUIFallbackLanguage
-    SystemLocale = [System.String]$SystemLocale
+    SystemLocale = [System.String]$SystemLocale.Name
     CurrentInstalledLanguages = [System.String[]]$CULanguages
     UserLocale = [System.String]$CULocale
     }
@@ -161,12 +179,12 @@ Function Set-TargetResource
 
         $LanguageSettings += "`t<gs:MUILanguagePreferences>"
 
-        if ($MUILanguage -ne $null)
+        if ($null -ne $MUILanguage)
         {
             $LanguageSettings += "`t`t<gs:MUILanguage Value=`"$MUILanguage`"/>"
         }
 
-        if ($MUIFallbackLanguage -ne $null)
+        if ($null -ne $MUIFallbackLanguage)
         {
             $LanguageSettings += "`t`t<gs:MUIFallback Value=`"$MUIFallbackLanguage`"/>"
         }
@@ -181,7 +199,7 @@ Function Set-TargetResource
         $LanguageSettings += "`t<gs:SystemLocale Name=`"$SystemLocale`"/>"
     }
 
-    if ($AddInputLanguages -ne $null -or $RemoveInputLanguages -ne $null)
+    if ($null -ne $AddInputLanguages -or $null -ne $RemoveInputLanguages)
     {
         $ConfigurationRequired = $true
 
@@ -322,53 +340,88 @@ Function Test-TargetResource
     $CULocationID = Get-ItemPropertyValue "HKCU:\Control Panel\International\Geo\" -Name "Nation"
     Write-Verbose "Current User LocationID = $CULocationID type $($CULocationID.gettype())"
 
-    $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\" -Name "PreferredUILanguages"
+    #This is only set if the language has ever been changed, if to it defaults to system preferred
+    try
+    {
+        $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\" -Name "PreferredUILanguages"
+    }
+    catch
+    {
+        $CUMUILanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\MuiCached\" -Name "MachinePreferredUILanguages"
+    }
+    #Assume there is only 1 active MUI installed
+    [String]$CUMUILanguage = $CUMUILanguage[0]
     Write-Verbose "Current User MUILanguage = $CUMUILanguage type $($CUMUILanguage.gettype())"
 
     #This is value only exists if a fallback MUI language has been configured
-    $CUMUIFallbackLanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\LanguageConfiguration" -Name "$CUMUILanguage" -ErrorAction SilentlyContinue
-    Write-Verbose "Current User MUIFallbackLanguage = $CUMUIFallbackLanguage type $($CUMUIFallbackLanguage.gettype())"
+    try
+    {
+        $CUMUIFallbackLanguage = Get-ItemPropertyValue "HKCU:\Control Panel\Desktop\LanguageConfiguration\" -Name "$CUMUILanguage" -ErrorAction Stop
+        #Assume there is only 1 active MUI installed
+        [String]$CUMUIFallbackLanguage = $CUMUIFallbackLanguage[0]
+        Write-Verbose "Current User MUIFallbackLanguage = $CUMUIFallbackLanguage  type $($CUMUIFallbackLanguage.gettype())"
+    }
+    catch
+    {
+        Write-Verbose "Current User does not have a fallback language"
+    }
 
     $CUSystemLocale = Get-WinSystemLocale
     Write-Verbose "Current System Locale = $($CUSystemLocale.Name) type $($CULocationID.gettype())"
 
-    $CULanguages = Get-ItemPropertyValue "HKCU:\Control Panel\International\User Profile" -Name "Languages"
+    $CULanguages = Get-ItemPropertyValue "HKCU:\Control Panel\International\User Profile\" -Name "Languages"
     Write-Verbose "Currently Installed Languages = $CULanguages type $($CULanguages.gettype())"
 
-    $CULocale = Get-ItemPropertyValue "HKCU:\Control Panel\International" -Name "LocaleName"
+    $CULocale = Get-ItemPropertyValue "HKCU:\Control Panel\International\" -Name "LocaleName"
     Write-Verbose "Current UserLocale = $CULocale type $($CULocale.gettype())"
 
     $SYSLocationID = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\Geo\" -Name "Nation"
-    Write-Verbose "Current User LocationID = $SYSLocationID type $($SYSLocationID.gettype())"
+    Write-Verbose "System User LocationID = $SYSLocationID type $($SYSLocationID.gettype())"
 
-    $SYSMUILanguage = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached" -Name "MachinePreferredUILanguages"
-    Write-Verbose "Current User MUILanguage = $SYSMUILanguage type $($SYSMUILanguage.gettype())"
+    $SYSMUILanguage = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\" -Name "MachinePreferredUILanguages"
+    [String]$SYSMUILanguage = $SYSMUILanguage[0]
+    Write-Verbose "System User MUILanguage = $SYSMUILanguage type $($SYSMUILanguage.gettype())"
 
     #This property only exists if a fallback MUI Language has been configured for a system account
-    $SYSMUIFallbackLanguage = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration" -Name "$SYSMUILanguage" -ErrorAction SilentlyContinue
-    Write-Verbose "Current User MUIFallbackLanguage = $SYSMUIFallbackLanguage type $($SYSMUIFallbackLanguage.gettype())"
+    try
+    {
+        $SYSMUIFallbackLanguage = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\" -Name "$SYSMUILanguage" -ErrorAction Stop
+        Write-Verbose "System User MUIFallbackLanguage = $SYSMUIFallbackLanguage type $($SYSMUIFallbackLanguage.gettype())"
+    }
+    catch
+    {
+        Write-Verbose "System User does not have a fallback language"
+    }
 
-    $SYSLanguages = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile" -Name "Languages"
-    Write-Verbose "Currently Installed Languages = $SYSLanguages type $($SYSLanguages.gettype())"
+    $SYSLanguages = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\" -Name "Languages"
+    Write-Verbose "System Currently Installed Languages = $SYSLanguages type $($SYSLanguages.gettype())"
 
-    $SYSLocale = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International" -Name "LocaleName"
-    Write-Verbose "Current UserLocale = $SYSLocale type $($SYSLocale.gettype())"
+    $SYSLocale = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\" -Name "LocaleName"
+    Write-Verbose "System UserLocale = $SYSLocale type $($SYSLocale.gettype())"
 
     $NULocationID = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\Geo\" -Name "Nation"
-    Write-Verbose "Current User LocationID = $NULocationID type $($NULocationID.gettype())"
+    Write-Verbose "New User LocationID = $NULocationID type $($NULocationID.gettype())"
 
-    $NUMUILanguage = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached" -Name "MachinePreferredUILanguages"
-    Write-Verbose "Current User MUILanguage = $NUMUILanguage type $($NUMUILanguage.gettype())"
+    $NUMUILanguage = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\" -Name "MachinePreferredUILanguages"
+    [String]$NUMUILanguage = $NUMUILanguage[0]
+    Write-Verbose "New User MUILanguage = $NUMUILanguage type $($NUMUILanguage.gettype())"
 
     #This property only exists if a fallback MUI Language has been configured for a new user account
-    $NUMUIFallbackLanguage = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration" -Name "$NUMUILanguage" -ErrorAction SilentlyContinue
-    Write-Verbose "Current User MUIFallbackLanguage = $NUMUIFallbackLanguage type $($NUMUIFallbackLanguage.gettype())"
+    try
+    {
+        $NUMUIFallbackLanguage = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\" -Name "$NUMUILanguage" -ErrorAction Stop
+        Write-Verbose "New User MUIFallbackLanguage = $NUMUIFallbackLanguage type $($NUMUIFallbackLanguage.gettype())"
+    }
+    catch
+    {
+        Write-Verbose "New User does not have a fallback language"
+    }
 
-    $NULanguages = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile" -Name "Languages"
-    Write-Verbose "Currently Installed Languages = $NULanguages type $($NULanguages.gettype())"
+    $NULanguages = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\" -Name "Languages"
+    Write-Verbose "New Installed Languages = $NULanguages type $($NULanguages.gettype())"
 
-    $NULocale = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International" -Name "LocaleName"
-    Write-Verbose "Current UserLocale = $NULocale type $($NULocale.gettype())"
+    $NULocale = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\" -Name "LocaleName"
+    Write-Verbose "New UserLocale = $NULocale type $($NULocale.gettype())"
 
     #If LocationID requires configuration
     if ($LocationID -ne 0)
@@ -401,21 +454,26 @@ Function Test-TargetResource
     if ($MUILanguage -ne "")
     {
         #Check current user
-        if ($CUMUILanguage[0] -ne $MUILanguage)
+        if ($CUMUILanguage -ne $MUILanguage)
         {
             $result = $false
+            Write-Verbose "New MUILanguage: $MUILanguage"
+            Write-Verbose "New CUMUILanguage: $CUMUILanguage"
+            Write-Verbose "MUILanguage Current User requires update"
         }
 
         #Check System Account if also configuring System
-        if ($CopySystem -eq $true -and $SYSMUILanguage[0] -ne $MUILanguage)
+        if ($CopySystem -eq $true -and $SYSMUILanguage -ne $MUILanguage)
         {
             $result = $false
+            Write-Verbose "MUILanguage System User requires update"
         }
 
         #Check New User Account if also configuring new users
-        if ($CopyNewUser -eq $true -and $NUMUILanguage[0] -ne $MUILanguage)
+        if ($CopyNewUser -eq $true -and $NUMUILanguage -ne $MUILanguage)
         {
             $result = $false
+            Write-Verbose "MUILanguage New User requires update"
         }
         Write-Verbose "Result after MUILanguage: $result"
     }
@@ -428,21 +486,35 @@ Function Test-TargetResource
     if ($MUIFallbackLanguage -ne "")
     {
         #Check current user
-        if ($CUMUIFallbackLanguage[0] -ne $MUIFallbackLanguage)
+        if ($null -ne $CUMUIFallbackLanguage)
         {
-            $result = $false
+            if ($CUMUIFallbackLanguage -ne $MUIFallbackLanguage)
+            {
+                $result = $false
+                Write-Verbose "New MUIFallbackLanguage: $MUIFallbackLanguage"
+                Write-Verbose "New CUMUIFallbackLanguage: $CUMUIFallbackLanguage"
+                Write-Verbose "MUIFallbackLanguage Current User requires update"
+            }
         }
 
         #Check System Account if also configuring System
-        if ($CopySystem -eq $true -and $SYSMUIFallbackLanguage[0] -ne $MUIFallbackLanguage)
+        if ($null -ne $SYSMUIFallbackLanguage)
         {
-            $result = $false
+            if ($CopySystem -eq $true -and $SYSMUIFallbackLanguage -ne $MUIFallbackLanguage)
+            {
+                $result = $false
+                Write-Verbose "MUIFallbackLanguage System User requires update"
+            }
         }
 
         #Check New User Account if also configuring new users
-        if ($CopyNewUser -eq $true -and $NUMUIFallbackLanguage[0] -ne $MUIFallbackLanguage)
+        if ($null -ne $NUMUIFallbackLanguage)
         {
-            $result = $false
+            if ($CopyNewUser -eq $true -and $NUMUIFallbackLanguage -ne $MUIFallbackLanguage)
+            {
+                $result = $false
+                Write-Verbose "MUIFallbackLanguage New User requires update"
+            }
         }
         Write-Verbose "Result after MUIFallbackLanguage: $result"
     }
@@ -465,7 +537,7 @@ Function Test-TargetResource
         Write-Verbose "SystemLocale not specified, skipping checks"
     }
 
-    if ($AddInputLanguages -ne $null)
+    if ($null -ne $AddInputLanguages)
     {
         #Loop through all languages which need to be on the system
         foreach($language in $AddInputLanguages)
@@ -495,7 +567,7 @@ Function Test-TargetResource
         Write-Verbose "AddInputLanguages not specified, skipping checks"
     }
 
-    if ($RemoveInputLanguages -ne $null)
+    if ($null -ne $RemoveInputLanguages)
     {
         foreach($language in $RemoveInputLanguages)
         {

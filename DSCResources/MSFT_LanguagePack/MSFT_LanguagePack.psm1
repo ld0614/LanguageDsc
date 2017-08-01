@@ -1,4 +1,4 @@
-﻿
+
 <#
     .SYNOPSIS
         Retrieves the current state of the specified Language Pack
@@ -130,7 +130,7 @@ Function Test-TargetResource
     [OutputType([System.Boolean])]
     Param
     (
-        [parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $LanguagePackName,
 

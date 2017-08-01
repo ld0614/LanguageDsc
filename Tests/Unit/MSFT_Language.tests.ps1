@@ -47,8 +47,10 @@ try
         #Define Static Variables used within all Tests
         $script:DSCResourceName = 'MSFT_Language'
         $CurrentLocation = "242"
-        $CurrentUILanguage = "en-GB"
-        $CurrentUIFallbackLanguage = "en-US"
+        [String]$CurrentUILanguage = "en-GB"
+        [String[]]$CurrentUILanguageArray = @("$CurrentUILanguage")
+        [String]$CurrentUIFallbackLanguage = "en-US"
+        [String[]]$CurrentUIFallbackLanguageArray = @("en-US")
         $CurrentSystemLocale = "en-GB"
         $CurrentInstalledLanguages = @("en-GB","en-US")
         $CurrentUserLocale = "en-GB"
@@ -160,7 +162,9 @@ try
         }
 
         Describe "$($script:DSCResourceName)\Get-TargetResource" {
-
+            Mock -CommandName Get-ItemPropertyValue `
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith {"Mock Required"}
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\Geo\") -and ($Name -eq "Nation") }`
                 -ModuleName $($script:DSCResourceName) `
@@ -169,13 +173,15 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\") -and ($Name -eq "PreferredUILanguages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { @($CurrentUILanguage) } `
+                -MockWith { [String[]]@($CurrentUILanguage,"") } `
                 -Verifiable
+            #MockWith doesn't work with single item
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration") -and ($Name -eq $CurrentUILanguage) }`
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { @($CurrentUIFallbackLanguage) } `
+                -MockWith { @($CurrentUIFallbackLanguage,"") } `
                 -Verifiable
+            #MockWith doesn't work with single item
             Mock -CommandName Get-WinSystemLocale `
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { @{Name = $CurrentSystemLocale}} `
@@ -193,7 +199,8 @@ try
 
             Context 'Get current Language State' {
                 $CurrentState = Get-TargetResource `
-                    -IsSingleInstance "Yes"
+                    -IsSingleInstance "Yes" `
+                    -Verbose
 
                 it 'All Mocks should have run'{
                     {Assert-VerifiableMocks} | should not throw
@@ -201,44 +208,179 @@ try
 
                 It 'Should return hashtable with Key IsSingleInstance'{
                     $CurrentState.ContainsKey('IsSingleInstance') | Should Be $true
-                    $CurrentState.IsSingleInstance = "Yes"
+                    $CurrentState.IsSingleInstance -eq "Yes"  | should be $true
                 }
+                Write-Verbose "Returned IsSingleInstance: $($CurrentState.IsSingleInstance)" -Verbose:$true
 
                 It "Should return hashtable with Name LocationID and a Value that matches '$CurrentLocation'" {
                     $CurrentState.ContainsKey('LocationID') | Should Be $true
-                    $CurrentState.LocationID = $CurrentLocation
+                    $CurrentState.LocationID -eq $CurrentLocation | should be $true
                 }
+                Write-Verbose "Returned LocationID: $($CurrentState.LocationID)" -Verbose:$true
 
-                It "Should return hashtable with Name MUILanguage and a Value that matches '$CurrentUILanguage'" {
+                It "Should return hashtable with Name MUILanguage and a Value that matches '$($CurrentUILanguage)'" {
                     $CurrentState.ContainsKey('MUILanguage') | Should Be $true
-                    $CurrentState.MUILanguage = $CurrentUILanguage
+                    $CurrentState.MUILanguage -eq $CurrentUILanguageArray | should be $true
                 }
+                Write-Verbose "Returned MUILanguage: $($CurrentState.MUILanguage)" -Verbose:$true
 
                 It "Should return hashtable with Name MUIFallbackLanguage and a Value that matches '$CurrentUIFallbackLanguage'" {
                     $CurrentState.ContainsKey('MUIFallbackLanguage') | Should Be $true
-                    $CurrentState.MUIFallbackLanguage = $CurrentUIFallbackLanguage
+                    $CurrentState.MUIFallbackLanguage -eq $CurrentUIFallbackLanguage | should be $true
                 }
+                Write-Verbose "Returned MUIFallbackLanguage: $($CurrentState.MUIFallbackLanguage)" -Verbose:$true
 
                 It "Should return hashtable with Name SystemLocale and a Value that matches '$CurrentSystemLocale'" {
                     $CurrentState.ContainsKey('SystemLocale') | Should Be $true
-                    $CurrentState.SystemLocale = $CurrentSystemLocale
+                    $CurrentState.SystemLocale -eq $CurrentSystemLocale | should be $true
                 }
+                Write-Verbose "Returned SystemLocale: $($CurrentState.SystemLocale)" -Verbose:$true
 
+                $LanguageArray = @($CurrentState.CurrentInstalledLanguages)
                 It "Should return hashtable with Name CurrentInstalledLanguages and a Value that matches '$CurrentInstalledLanguages'" {
                     $CurrentState.ContainsKey('CurrentInstalledLanguages') | Should Be $true
-                    $CurrentState.CurrentInstalledLanguages = $CurrentInstalledLanguages
+                    Compare-Object -ReferenceObject $CurrentInstalledLanguages -DifferenceObject $LanguageArray | Should be $null
                 }
+                Write-Verbose "Returned CurrentInstalledLanguages: $($LanguageArray)" -Verbose:$true
 
                 It "Should return hashtable with Name UserLocale and a Value that matches '$CurrentUserLocale'" {
                     $CurrentState.ContainsKey('UserLocale') | Should Be $true
-                    $CurrentState.UserLocale = $CurrentUserLocale
+                    $CurrentState.UserLocale -eq $CurrentUserLocale | should be $true
                 }
+                Write-Verbose "Returned UserLocale: $($CurrentState.UserLocale)" -Verbose:$true
+            }
+
+            Context 'Get current Language State with failing PreferredUILanguages' {
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\") -and ($Name -eq "PreferredUILanguages") }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\MuiCached\") -and ($Name -eq "MachinePreferredUILanguages") }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [String[]]@($CurrentUILanguage,"") } `
+                -Verifiable
+
+                $CurrentState = Get-TargetResource `
+                    -IsSingleInstance "Yes" `
+                    -Verbose
+
+                it 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'Should return hashtable with Key IsSingleInstance'{
+                    $CurrentState.ContainsKey('IsSingleInstance') | Should Be $true
+                    $CurrentState.IsSingleInstance -eq "Yes"  | should be $true
+                }
+                Write-Verbose "Returned IsSingleInstance: $($CurrentState.IsSingleInstance)" -Verbose:$true
+
+                It "Should return hashtable with Name LocationID and a Value that matches '$CurrentLocation'" {
+                    $CurrentState.ContainsKey('LocationID') | Should Be $true
+                    $CurrentState.LocationID -eq $CurrentLocation | should be $true
+                }
+                Write-Verbose "Returned LocationID: $($CurrentState.LocationID)" -Verbose:$true
+
+                It "Should return hashtable with Name MUILanguage and a Value that matches '$($CurrentUILanguage)'" {
+                    $CurrentState.ContainsKey('MUILanguage') | Should Be $true
+                    $CurrentState.MUILanguage -eq $CurrentUILanguageArray | should be $true
+                }
+                Write-Verbose "Returned MUILanguage: $($CurrentState.MUILanguage)" -Verbose:$true
+
+                It "Should return hashtable with Name MUIFallbackLanguage and a Value that matches '$CurrentUIFallbackLanguage'" {
+                    $CurrentState.ContainsKey('MUIFallbackLanguage') | Should Be $true
+                    $CurrentState.MUIFallbackLanguage -eq $CurrentUIFallbackLanguage | should be $true
+                }
+                Write-Verbose "Returned MUIFallbackLanguage: $($CurrentState.MUIFallbackLanguage)" -Verbose:$true
+
+                It "Should return hashtable with Name SystemLocale and a Value that matches '$CurrentSystemLocale'" {
+                    $CurrentState.ContainsKey('SystemLocale') | Should Be $true
+                    $CurrentState.SystemLocale -eq $CurrentSystemLocale | should be $true
+                }
+                Write-Verbose "Returned SystemLocale: $($CurrentState.SystemLocale)" -Verbose:$true
+
+                $LanguageArray = @($CurrentState.CurrentInstalledLanguages)
+                It "Should return hashtable with Name CurrentInstalledLanguages and a Value that matches '$CurrentInstalledLanguages'" {
+                    $CurrentState.ContainsKey('CurrentInstalledLanguages') | Should Be $true
+                    Compare-Object -ReferenceObject $CurrentInstalledLanguages -DifferenceObject $LanguageArray | Should be $null
+                }
+                Write-Verbose "Returned CurrentInstalledLanguages: $($LanguageArray)" -Verbose:$true
+
+                It "Should return hashtable with Name UserLocale and a Value that matches '$CurrentUserLocale'" {
+                    $CurrentState.ContainsKey('UserLocale') | Should Be $true
+                    $CurrentState.UserLocale -eq $CurrentUserLocale | should be $true
+                }
+                Write-Verbose "Returned UserLocale: $($CurrentState.UserLocale)" -Verbose:$true
+            }
+
+            Context 'Get current Language State without Fallback Language' {
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+
+                $CurrentState = Get-TargetResource `
+                    -IsSingleInstance "Yes" `
+                    -Verbose
+
+                it 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'Should return hashtable with Key IsSingleInstance'{
+                    $CurrentState.ContainsKey('IsSingleInstance') | Should Be $true
+                    $CurrentState.IsSingleInstance -eq "Yes"  | should be $true
+                }
+                Write-Verbose "Returned IsSingleInstance: $($CurrentState.IsSingleInstance)" -Verbose:$true
+
+                It "Should return hashtable with Name LocationID and a Value that matches '$CurrentLocation'" {
+                    $CurrentState.ContainsKey('LocationID') | Should Be $true
+                    $CurrentState.LocationID -eq $CurrentLocation | should be $true
+                }
+                Write-Verbose "Returned LocationID: $($CurrentState.LocationID)" -Verbose:$true
+
+                It "Should return hashtable with Name MUILanguage and a Value that matches '$($CurrentUILanguage)'" {
+                    $CurrentState.ContainsKey('MUILanguage') | Should Be $true
+                    $CurrentState.MUILanguage -eq $CurrentUILanguageArray | should be $true
+                }
+                Write-Verbose "Returned MUILanguage: $($CurrentState.MUILanguage)" -Verbose:$true
+
+                It "Should return hashtable with Name MUIFallbackLanguage and an empty string" {
+                    $CurrentState.ContainsKey('MUIFallbackLanguage') | Should Be $true
+                    $CurrentState.MUIFallbackLanguage -eq "" | should be $true
+                }
+                Write-Verbose "Returned MUIFallbackLanguage: $($CurrentState.MUIFallbackLanguage)" -Verbose:$true
+
+                It "Should return hashtable with Name SystemLocale and a Value that matches '$CurrentSystemLocale'" {
+                    $CurrentState.ContainsKey('SystemLocale') | Should Be $true
+                    $CurrentState.SystemLocale -eq $CurrentSystemLocale | should be $true
+                }
+                Write-Verbose "Returned SystemLocale: $($CurrentState.SystemLocale)" -Verbose:$true
+
+                $LanguageArray = @($CurrentState.CurrentInstalledLanguages)
+                It "Should return hashtable with Name CurrentInstalledLanguages and a Value that matches '$CurrentInstalledLanguages'" {
+                    $CurrentState.ContainsKey('CurrentInstalledLanguages') | Should Be $true
+                    Compare-Object -ReferenceObject $CurrentInstalledLanguages -DifferenceObject $LanguageArray | Should be $null
+                }
+                Write-Verbose "Returned CurrentInstalledLanguages: $($LanguageArray)" -Verbose:$true
+
+                It "Should return hashtable with Name UserLocale and a Value that matches '$CurrentUserLocale'" {
+                    $CurrentState.ContainsKey('UserLocale') | Should Be $true
+                    $CurrentState.UserLocale -eq $CurrentUserLocale | should be $true
+                }
+                Write-Verbose "Returned UserLocale: $($CurrentState.UserLocale)" -Verbose:$true
             }
         }
 
         Describe "$($script:DSCResourceName)\Test-TargetResource" {
 
             #Mock Current User
+            Mock -CommandName Get-ItemPropertyValue `
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith {"Mock Required"}
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\Geo\") -and ($Name -eq "Nation") }`
                 -ModuleName $($script:DSCResourceName) `
@@ -247,24 +389,24 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\") -and ($Name -eq "PreferredUILanguages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUILanguage) } `
+                -MockWith { [String[]]@($CurrentUILanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration") -and ($Name -eq $CurrentUILanguage) }`
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUIFallbackLanguage) } `
+                -MockWith { @($CurrentUIFallbackLanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-WinSystemLocale `
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { @{Name = $CurrentSystemLocale}} `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile") -and ($Name -eq "Languages") }`
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentInstalledLanguages } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International") -and ($Name -eq "LocaleName") }`
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\") -and ($Name -eq "LocaleName") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentUserLocale } `
                 -Verifiable
@@ -276,22 +418,22 @@ try
                 -MockWith { $CurrentLocation } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached") -and ($Name -eq "MachinePreferredUILanguages") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\") -and ($Name -eq "MachinePreferredUILanguages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUILanguage) } `
+                -MockWith { @($CurrentUILanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration") -and ($Name -eq $CurrentUILanguage) }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUIFallbackLanguage) } `
+                -MockWith { @($CurrentUIFallbackLanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile") -and ($Name -eq "Languages") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentInstalledLanguages } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International") -and ($Name -eq "LocaleName") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\") -and ($Name -eq "LocaleName") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentUserLocale } `
                 -Verifiable
@@ -303,29 +445,30 @@ try
                 -MockWith { $CurrentLocation } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached") -and ($Name -eq "MachinePreferredUILanguages") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\") -and ($Name -eq "MachinePreferredUILanguages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUILanguage) } `
+                -MockWith { @($CurrentUILanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration") -and ($Name -eq $CurrentUILanguage) }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { ,@($CurrentUIFallbackLanguage) } `
+                -MockWith { @($CurrentUIFallbackLanguage,"") } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile") -and ($Name -eq "Languages") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentInstalledLanguages } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International") -and ($Name -eq "LocaleName") }`
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\") -and ($Name -eq "LocaleName") }`
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith { $CurrentUserLocale } `
                 -Verifiable
 
             Context 'No Settings Specified' {
                 $TestState = Test-TargetResource `
-                    -IsSingleInstance "Yes"
+                    -IsSingleInstance "Yes" `
+                    -Verbose
                 
                 It 'Should not throw exception' {
                     {
@@ -338,7 +481,7 @@ try
                     {Assert-VerifiableMocks} | should not throw
                 }
 
-                It 'Should return true'{
+                It 'Function Should return true'{
                     $TestState | Should Be $true
                 }
             }
@@ -353,7 +496,8 @@ try
                     -AddInputLanguages $CurrentInstalledLanguages `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $true `
-                    -CopyNewUser $true
+                    -CopyNewUser $true `
+                    -Verbose
                 
                 It 'Should not throw exception' {
                     {
@@ -366,7 +510,8 @@ try
                             -AddInputLanguages $CurrentInstalledLanguages `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true
+                            -CopyNewUser $true `
+                            -Verbose
                     } | Should Not Throw
                 }
 
@@ -374,7 +519,57 @@ try
                     {Assert-VerifiableMocks} | should not throw
                 }
 
-                It 'Should return true'{
+                It 'Function Should return true'{
+                    $TestState | Should Be $true
+                }
+            }
+
+            Context 'Require no changes to all accounts with failing PreferredUILanguages' {
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\") -and ($Name -eq "PreferredUILanguages") }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\MuiCached\") -and ($Name -eq "MachinePreferredUILanguages") }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [String[]]@($CurrentUILanguage,"") } `
+                -Verifiable
+
+                $TestState = Test-TargetResource `
+                    -IsSingleInstance "Yes" `
+                    -LocationID $CurrentLocation `
+                    -MUILanguage $CurrentUILanguage `
+                    -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                    -SystemLocale $CurrentSystemLocale `
+                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -UserLocale $CurrentUserLocale `
+                    -CopySystem $true `
+                    -CopyNewUser $true `
+                    -Verbose
+                
+                It 'Should not throw exception' {
+                    {
+                        Test-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -LocationID $CurrentLocation `
+                            -MUILanguage $CurrentUILanguage `
+                            -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                            -SystemLocale $CurrentSystemLocale `
+                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -UserLocale $CurrentUserLocale `
+                            -CopySystem $true `
+                            -CopyNewUser $true `
+                            -Verbose
+                    } | Should Not Throw
+                }
+
+                It 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'Function Should return true'{
                     $TestState | Should Be $true
                 }
             }
@@ -390,7 +585,8 @@ try
                     -RemoveInputLanguages $LanguageToRemove `
                     -UserLocale $NewUserLocale `
                     -CopySystem $true `
-                    -CopyNewUser $true
+                    -CopyNewUser $true `
+                    -Verbose
                 
                 It 'Should not throw exception' {
                     {
@@ -404,7 +600,8 @@ try
                             -RemoveInputLanguages $LanguageToRemove `
                             -UserLocale $NewUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true
+                            -CopyNewUser $true `
+                            -Verbose
                     } | Should Not Throw
                 }
 
@@ -432,7 +629,8 @@ try
                     -AddInputLanguages $CurrentInstalledLanguages `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $false `
-                    -CopyNewUser $false
+                    -CopyNewUser $false `
+                    -Verbose
                 
                 It 'Should not throw exception' {
                     {
@@ -445,7 +643,8 @@ try
                             -AddInputLanguages $CurrentInstalledLanguages `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $false `
-                            -CopyNewUser $false
+                            -CopyNewUser $false `
+                            -Verbose
                     } | Should Not Throw
                 }
 
@@ -468,7 +667,8 @@ try
                     -RemoveInputLanguages $LanguageToRemove `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $true `
-                    -CopyNewUser $true
+                    -CopyNewUser $true `
+                    -Verbose
                 
                 It 'Should not throw exception' {
                     {
@@ -481,7 +681,8 @@ try
                             -RemoveInputLanguages $LanguageToRemove `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true
+                            -CopyNewUser $true `
+                            -Verbose
                     } | Should Not Throw
                 }
 
@@ -491,6 +692,59 @@ try
 
                 It 'Should return false'{
                     $TestState | Should Be $false
+                }
+            }
+
+            Context 'Require no changes to when no fallback language is used' {
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\Desktop\LanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+                Mock -CommandName Get-ItemPropertyValue `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\Desktop\MuiCached\MachineLanguageConfiguration\") -and ($Name -eq $CurrentUILanguage) }`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { Throw "Invalid Entry" } `
+                -Verifiable
+                $TestState = Test-TargetResource `
+                    -IsSingleInstance "Yes" `
+                    -LocationID $CurrentLocation `
+                    -MUILanguage $CurrentUILanguage `
+                    -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                    -SystemLocale $CurrentSystemLocale `
+                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -UserLocale $CurrentUserLocale `
+                    -CopySystem $true `
+                    -CopyNewUser $true `
+                    -Verbose
+                
+                It 'Should not throw exception' {
+                    {
+                        Test-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -LocationID $CurrentLocation `
+                            -MUILanguage $CurrentUILanguage `
+                            -MUIFallbackLanguage $CurrentUIFallbackLanguage `
+                            -SystemLocale $CurrentSystemLocale `
+                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -UserLocale $CurrentUserLocale `
+                            -CopySystem $true `
+                            -CopyNewUser $true `
+                            -Verbose
+                    } | Should Not Throw
+                }
+
+                It 'All Mocks should have run'{
+                    {Assert-VerifiableMocks} | should not throw
+                }
+
+                It 'Function Should return true'{
+                    $TestState | Should Be $true
                 }
             }
         }
@@ -506,7 +760,8 @@ try
                 It 'Should throw exception' {
                     {
                         Set-TargetResource `
-                            -IsSingleInstance "Yes"
+                            -IsSingleInstance "Yes" `
+                            -Verbose
                     } | Should Throw
                 }
                 It 'Should not call Out-File' {
@@ -536,7 +791,8 @@ try
                             -AddInputLanguages $CurrentInstalledLanguages `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true
+                            -CopyNewUser $true `
+                            -Verbose
                     } | Should not Throw
                 }
                 $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
@@ -551,7 +807,7 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent.Replace(' ','').Replace("`t","") -eq $ValidLocationConfig.Replace(' ','').Replace("`t","")) | Should be $true
+                    ($fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -eq $ValidLocationConfig.Replace(' ','').Replace("`t","").Replace("`n","")) | Should be $true
                 }
 
                 #Useful when debugging XML Output
@@ -580,7 +836,8 @@ try
                             -RemoveInputLanguages $LanguageToRemove `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true
+                            -CopyNewUser $true `
+                            -Verbose
                     } | Should not Throw
                 }
                 $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
@@ -595,7 +852,7 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent.Replace(' ','').Replace("`t","") -eq $ValidRemovalConfig.Replace(' ','').Replace("`t","")) | Should be $true
+                    ($fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -eq $ValidRemovalConfig.Replace(' ','').Replace("`t","").Replace("`n","")) | Should be $true
                 }
 
                 #Useful when debugging XML Output

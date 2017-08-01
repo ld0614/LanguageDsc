@@ -12,5 +12,6 @@ class MSFT_Language : OMI_BaseResource
     [Write] String UserLocale;
     [Write] Boolean CopySystem;
     [Write] Boolean CopyNewUser;
+    [Read] String CurrentInstalledLanguages[];
 };
 

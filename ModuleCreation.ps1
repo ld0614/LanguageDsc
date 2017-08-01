@@ -12,7 +12,8 @@ $RemoveInputLanguages = New-xDscResourceProperty -Name "RemoveInputLanguages" -T
 $UserLocale = New-xDscResourceProperty -Name "UserLocale" -Type String -Attribute Write
 $CopySystem = New-xDscResourceProperty -Name "CopySystem" -Type Boolean -Attribute Write
 $CopyNewUser = New-xDscResourceProperty -Name "CopyNewUser" -Type Boolean -Attribute Write
+$CurrentInstalledLanguages = New-xDscResourceProperty -Name CurrentInstalledLanguages -Type String[] -Attribute Read
 
 New-xDscResource -Name "MSFT_LanguagePack" -FriendlyName "LanguagePack" -Property $LanguagePackName, $LanguagePackLocation, $Ensure -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"
 
-New-xDscResource -Name "MSFT_Language" -FriendlyName "Language" -Property $IsSingleInstance, $LocationID, $MUILanguage, $MUIFallbackLanguage, $SystemLocale, $AddInputLanguages, $RemoveInputLanguages, $UserLocale, $CopySystem, $CopyNewUser -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"
+New-xDscResource -Name "MSFT_Language" -FriendlyName "Language" -Property $IsSingleInstance, $LocationID, $MUILanguage, $MUIFallbackLanguage, $SystemLocale, $AddInputLanguages, $RemoveInputLanguages, $UserLocale, $CopySystem, $CopyNewUser, $CurrentInstalledLanguages -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"

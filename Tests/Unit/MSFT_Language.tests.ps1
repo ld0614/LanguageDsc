@@ -808,7 +808,7 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent-eq $ValidLocationConfig) | Should be $true
+                    ($fileContent.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0) -eq $ValidLocationConfig.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0)) | Should be $true
                 }
 
                 #Useful when debugging XML Output
@@ -855,7 +855,7 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent -eq $ValidRemovalConfig) | Should be $true
+                    ($fileContent.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0) -eq $ValidRemovalConfig.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0)) | Should be $true
                 }
 
                 #Useful when debugging XML Output

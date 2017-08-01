@@ -3,7 +3,7 @@
 Configuration Example
 {
 
-	Import-DscResource -Module LanguageDsc
+    Import-DscResource -Module LanguageDsc
 
     Language ConfigureLanguage {
         IsSingleInstance = "Yes" 

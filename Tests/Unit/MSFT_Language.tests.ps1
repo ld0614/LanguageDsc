@@ -854,6 +854,8 @@ try
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
                     ($fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -eq $ValidRemovalConfig.Replace(' ','').Replace("`t","").Replace("`n","")) | Should be $true
                 }
+                Write-Verbose $fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -Verbose:$true
+                Write-Verbose $ValidRemovalConfig.Replace(' ','').Replace("`t","").Replace("`n","") -Verbose:$true
 
                 #Useful when debugging XML Output
                 Write-Verbose "Known File Content" -Verbose:$true

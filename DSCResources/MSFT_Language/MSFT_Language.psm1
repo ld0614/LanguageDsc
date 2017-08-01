@@ -160,71 +160,71 @@ Function Set-TargetResource
 
     $LanguageSettings += "<gs:GlobalizationServices xmlns:gs=`"urn:longhornGlobalizationUnattend`">"
 
-    $LanguageSettings += "`t<gs:UserList>"
-    $LanguageSettings += "`t`t<gs:User UserID=`"Current`" CopySettingsToDefaultUserAcct=`"$($CopyNewUser.ToString().tolower())`" CopySettingsToSystemAcct=`"$($CopySystem.ToString().tolower())`"/>"
-    $LanguageSettings += "`t</gs:UserList>"
+    $LanguageSettings += "    <gs:UserList>"
+    $LanguageSettings += "        <gs:User UserID=`"Current`" CopySettingsToDefaultUserAcct=`"$($CopyNewUser.ToString().tolower())`" CopySettingsToSystemAcct=`"$($CopySystem.ToString().tolower())`"/>"
+    $LanguageSettings += "    </gs:UserList>"
 
     if ($LocationID -ne "")
     {
         $ConfigurationRequired = $true
 
-        $LanguageSettings += "`t<gs:LocationPreferences>"
-        $LanguageSettings += "`t`t<gs:GeoID Value=`"$LocationID`"/>"
-        $LanguageSettings += "`t</gs:LocationPreferences>"
+        $LanguageSettings += "    <gs:LocationPreferences>"
+        $LanguageSettings += "        <gs:GeoID Value=`"$LocationID`"/>"
+        $LanguageSettings += "    </gs:LocationPreferences>"
     }
 
     if ($MUILanguage -ne "" -or $MUIFallbackLanguage -ne "")
     {
         $ConfigurationRequired = $true
 
-        $LanguageSettings += "`t<gs:MUILanguagePreferences>"
+        $LanguageSettings += "    <gs:MUILanguagePreferences>"
 
         if ($null -ne $MUILanguage)
         {
-            $LanguageSettings += "`t`t<gs:MUILanguage Value=`"$MUILanguage`"/>"
+            $LanguageSettings += "        <gs:MUILanguage Value=`"$MUILanguage`"/>"
         }
 
         if ($null -ne $MUIFallbackLanguage)
         {
-            $LanguageSettings += "`t`t<gs:MUIFallback Value=`"$MUIFallbackLanguage`"/>"
+            $LanguageSettings += "        <gs:MUIFallback Value=`"$MUIFallbackLanguage`"/>"
         }
         
-        $LanguageSettings += "`t</gs:MUILanguagePreferences>"
+        $LanguageSettings += "    </gs:MUILanguagePreferences>"
     }
 
     if ($SystemLocale -ne "")
     {
         $ConfigurationRequired = $true
 
-        $LanguageSettings += "`t<gs:SystemLocale Name=`"$SystemLocale`"/>"
+        $LanguageSettings += "    <gs:SystemLocale Name=`"$SystemLocale`"/>"
     }
 
     if ($null -ne $AddInputLanguages -or $null -ne $RemoveInputLanguages)
     {
         $ConfigurationRequired = $true
 
-        $LanguageSettings += "`t<gs:InputPreferences>"
+        $LanguageSettings += "    <gs:InputPreferences>"
 
         foreach ($LanguageID in $AddInputLanguages)
         {
-            $LanguageSettings += "`t`t<gs:InputLanguageID Action=`"add`" ID=`"$LanguageID`"/>"
+            $LanguageSettings += "        <gs:InputLanguageID Action=`"add`" ID=`"$LanguageID`"/>"
         }
 
         foreach ($LanguageID in $RemoveInputLanguages)
         {
-            $LanguageSettings += "`t`t<gs:InputLanguageID Action=`"remove`" ID=`"$LanguageID`"/>"
+            $LanguageSettings += "        <gs:InputLanguageID Action=`"remove`" ID=`"$LanguageID`"/>"
         }
         
-        $LanguageSettings += "`t</gs:InputPreferences>"
+        $LanguageSettings += "    </gs:InputPreferences>"
     }
 
     if ($UserLocale -ne "")
     {
         $ConfigurationRequired = $true
 
-        $LanguageSettings += "`t<gs:UserLocale>"
-        $LanguageSettings += "`t`t<gs:Locale Name=`"$UserLocale`" SetAsCurrent=`"true`" ResetAllSettings=`"true`"/>"
-        $LanguageSettings += "`t</gs:UserLocale>"
+        $LanguageSettings += "    <gs:UserLocale>"
+        $LanguageSettings += "        <gs:Locale Name=`"$UserLocale`" SetAsCurrent=`"true`" ResetAllSettings=`"true`"/>"
+        $LanguageSettings += "    </gs:UserLocale>"
     }
 
     $LanguageSettings +=  "</gs:GlobalizationServices>"

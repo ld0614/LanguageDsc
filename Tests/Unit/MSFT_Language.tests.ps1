@@ -34,7 +34,7 @@ function Invoke-TestCleanup {
     Restore-TestEnvironment -TestEnvironment $TestEnvironment
 
     #Remove Temp file after testing to keep the environment clean
-    Remove-Item -Path "$env:TEMP\Locale.xml" -Force -ErrorAction SilentlyContinue
+    #Remove-Item -Path "$env:TEMP\Locale.xml" -Force -ErrorAction SilentlyContinue
 }
 
 # Begin Testing
@@ -81,7 +81,8 @@ try
         <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
     </gs:UserLocale>
 </gs:GlobalizationServices>
-        '
+'
+
         $ValidRemovalConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
     <gs:UserList>
         <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>
@@ -101,7 +102,7 @@ try
         <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
     </gs:UserLocale>
 </gs:GlobalizationServices>
-        '
+'
 
         # TODO: Complete the Describe blocks below and add more as needed.
         # The most common method for unit testing is to test by function. For more information
@@ -807,7 +808,7 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -eq $ValidLocationConfig.Replace(' ','').Replace("`t","").Replace("`n","")) | Should be $true
+                    ($fileContent-eq $ValidLocationConfig) | Should be $true
                 }
 
                 #Useful when debugging XML Output
@@ -852,10 +853,8 @@ try
 
                 It 'File Content should match known good config'{
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
-                    ($fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -eq $ValidRemovalConfig.Replace(' ','').Replace("`t","").Replace("`n","")) | Should be $true
+                    ($fileContent -eq $ValidRemovalConfig) | Should be $true
                 }
-                Write-Verbose $fileContent.Replace(' ','').Replace("`t","").Replace("`n","") -Verbose:$true
-                Write-Verbose $ValidRemovalConfig.Replace(' ','').Replace("`t","").Replace("`n","") -Verbose:$true
 
                 #Useful when debugging XML Output
                 Write-Verbose "Known File Content" -Verbose:$true

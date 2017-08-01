@@ -812,10 +812,12 @@ try
                 }
 
                 #Useful when debugging XML Output
-                Write-Verbose "Known File Content" -Verbose:$true
+                Write-Verbose "Known File Content:" -Verbose:$true
                 Write-Verbose $ValidLocationConfig -Verbose:$true
+                Write-Verbose "Known File Content Length: $($ValidLocationConfig.Length)" -Verbose:$true
                 Write-Verbose "Result File Content" -Verbose:$true
                 Write-Verbose $fileContent -Verbose:$true
+                Write-Verbose "Result File Content Length: $($fileContent.Length)" -Verbose:$true
 
                 It 'Should call Start-Process' {
                     Assert-MockCalled `

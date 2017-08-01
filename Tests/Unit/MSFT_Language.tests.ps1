@@ -61,8 +61,48 @@ try
         $NewSystemLocale = "de-DE"
         $LanguageToInstall = "de-DE"
         $NewUserLocale = "de-DE"
-        $ValidLocationConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">`n    <gs:UserList>`n        <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>`n    </gs:UserList>`n    <gs:LocationPreferences>`n        <gs:GeoID Value="58"/>`n    </gs:LocationPreferences>`n    <gs:MUILanguagePreferences>`n        <gs:MUILanguage Value="en-GB"/>`n        <gs:MUIFallback Value="en-US"/>`n    </gs:MUILanguagePreferences>    <gs:SystemLocale Name="en-GB"/>`n    <gs:InputPreferences>`n        <gs:InputLanguageID Action="add" ID="en-GB"/>`n        <gs:InputLanguageID Action="add" ID="en-US"/>`n    </gs:InputPreferences>`n    <gs:UserLocale>`n        <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>`n    </gs:UserLocale>`n</gs:GlobalizationServices>`n'
-        $ValidRemovalConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">`n    <gs:UserList>`n        <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>`n    </gs:UserList>`n    <gs:LocationPreferences>`n        <gs:GeoID Value="58"/>`n    </gs:LocationPreferences>`n    <gs:MUILanguagePreferences>`n        <gs:MUILanguage Value="en-GB"/>`n        <gs:MUIFallback Value="en-US"/>`n    </gs:MUILanguagePreferences>`n    <gs:SystemLocale Name="en-GB"/>`n    <gs:InputPreferences>`n        <gs:InputLanguageID Action="remove" ID="en-US"/>`n    </gs:InputPreferences>`n    <gs:UserLocale>`n        <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>`n    </gs:UserLocale>`n</gs:GlobalizationServices>`n'
+        $ValidLocationConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
+    <gs:UserList>
+        <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>
+    </gs:UserList>
+    <gs:LocationPreferences>
+        <gs:GeoID Value="58"/>
+    </gs:LocationPreferences>
+    <gs:MUILanguagePreferences>
+        <gs:MUILanguage Value="en-GB"/>
+        <gs:MUIFallback Value="en-US"/>
+    </gs:MUILanguagePreferences>
+    <gs:SystemLocale Name="en-GB"/>
+    <gs:InputPreferences>
+        <gs:InputLanguageID Action="add" ID="en-GB"/>
+        <gs:InputLanguageID Action="add" ID="en-US"/>
+    </gs:InputPreferences>
+    <gs:UserLocale>
+        <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
+    </gs:UserLocale>
+</gs:GlobalizationServices>
+'
+
+        $ValidRemovalConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
+    <gs:UserList>
+        <gs:User UserID="Current" CopySettingsToDefaultUserAcct="true" CopySettingsToSystemAcct="true"/>
+    </gs:UserList>
+    <gs:LocationPreferences>
+        <gs:GeoID Value="58"/>
+    </gs:LocationPreferences>
+    <gs:MUILanguagePreferences>
+        <gs:MUILanguage Value="en-GB"/>
+        <gs:MUIFallback Value="en-US"/>
+    </gs:MUILanguagePreferences>
+    <gs:SystemLocale Name="en-GB"/>
+    <gs:InputPreferences>
+        <gs:InputLanguageID Action="remove" ID="en-US"/>
+    </gs:InputPreferences>
+    <gs:UserLocale>
+        <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
+    </gs:UserLocale>
+</gs:GlobalizationServices>
+'
 
         # TODO: Complete the Describe blocks below and add more as needed.
         # The most common method for unit testing is to test by function. For more information

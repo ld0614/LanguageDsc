@@ -6,8 +6,8 @@ configuration MSFT_LanguagePack_Config {
     node localhost {
 
         LanguagePack Integration_Test {
-            LanguagePackName = "en-GB"
-            LanguagePackLocation = "\\SRV1\LanguagePacks\"
+            LanguagePackName = "De-DE"
+            LanguagePackLocation = "C:\Temp\x64fre_Server_de-de_lp.cab"
             Ensure = "Present"
         }
     }

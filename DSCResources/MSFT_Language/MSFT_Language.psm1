@@ -47,10 +47,27 @@ Function Get-TargetResource
     }
 
     $SystemLocale = Get-WinSystemLocale
-    Write-Verbose "Current System Locale = $SystemLocale"
+    Write-Verbose "Current System Locale = $($SystemLocale.Name)"
 
-    $CULanguages = Get-ItemPropertyValue "HKCU:\Control Panel\International\User Profile" -Name "Languages"
+    $CULanguages = Get-ItemPropertyValue "HKCU:\Control Panel\International\User Profile\" -Name "Languages"
     Write-Verbose "Currently Installed Languages = $CULanguages"
+    
+    #RegEX taken from implementation error output
+    $RegEx = '[0-9a-fA-F]{4}:[0-9a-fA-F]{8}|[0-9a-fA-F]{4}:\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}'
+    $ReturnLanguage = @{}
+
+    foreach ($Language in $CULanguages)
+    {
+        $LanguageProperties = Get-ItemProperty -Path "HKCU:\Control Panel\International\User Profile\$Language\" -ErrorAction Continue
+        Write-Verbose "LanguageProperties = $LanguageProperties"
+        $LanguageCodeObj = $LanguageProperties | Get-Member -MemberType NoteProperty | Where-Object {$_.Name -Match $RegEx} -ErrorAction Continue
+        $LanguageCode = $LanguageCodeObj.Name
+        if ($null -ne $LanguageCode)
+        {
+            Write-Verbose "Language Code is: $LanguageCode"
+            $ReturnLanguage += @{$Language=$LanguageCode}
+        }
+    }
 
     $CULocale = Get-ItemPropertyValue "HKCU:\Control Panel\International" -Name "LocaleName"
     Write-Verbose "Current UserLocale = $CULocale"
@@ -61,7 +78,7 @@ Function Get-TargetResource
     MUILanguage = [System.String]$CUMUILanguage
     MUIFallbackLanguage = [System.String]$CUMUIFallbackLanguage
     SystemLocale = [System.String]$SystemLocale.Name
-    CurrentInstalledLanguages = [System.String[]]$CULanguages
+    CurrentInstalledLanguages = [Hashtable]$ReturnLanguage
     UserLocale = [System.String]$CULocale
     }
 
@@ -172,6 +189,10 @@ Function Set-TargetResource
         $LanguageSettings += "        <gs:GeoID Value=`"$LocationID`"/>"
         $LanguageSettings += "    </gs:LocationPreferences>"
     }
+    else
+    {
+        Write-Verbose "LocationID configuration not required"
+    }
 
     if ($MUILanguage -ne "" -or $MUIFallbackLanguage -ne "")
     {
@@ -179,17 +200,21 @@ Function Set-TargetResource
 
         $LanguageSettings += "    <gs:MUILanguagePreferences>"
 
-        if ($null -ne $MUILanguage)
+        if ($MUILanguage -ne "")
         {
             $LanguageSettings += "        <gs:MUILanguage Value=`"$MUILanguage`"/>"
         }
 
-        if ($null -ne $MUIFallbackLanguage)
+        if ($MUIFallbackLanguage -ne "")
         {
             $LanguageSettings += "        <gs:MUIFallback Value=`"$MUIFallbackLanguage`"/>"
         }
         
         $LanguageSettings += "    </gs:MUILanguagePreferences>"
+    }
+    else
+    {
+        Write-Verbose "MUILanguage and MUIFallbackLanguage configuration not required"
     }
 
     if ($SystemLocale -ne "")
@@ -198,24 +223,44 @@ Function Set-TargetResource
 
         $LanguageSettings += "    <gs:SystemLocale Name=`"$SystemLocale`"/>"
     }
+    else
+    {
+        Write-Verbose "SystemLocale configuration not required"
+    }
 
     if ($null -ne $AddInputLanguages -or $null -ne $RemoveInputLanguages)
     {
+        #RegEX taken from implementation error output
+        $RegEx = '[0-9a-fA-F]{4}:[0-9a-fA-F]{8}|[0-9a-fA-F]{4}:\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}'
         $ConfigurationRequired = $true
 
         $LanguageSettings += "    <gs:InputPreferences>"
 
         foreach ($LanguageID in $AddInputLanguages)
         {
+            if ($LanguageID -notmatch $RegEx)
+            {
+                Throw "Invalid Keyboard code.  Code must be in the format $RegEx"
+            }
+
             $LanguageSettings += "        <gs:InputLanguageID Action=`"add`" ID=`"$LanguageID`"/>"
         }
 
         foreach ($LanguageID in $RemoveInputLanguages)
         {
+            if ($LanguageID -notmatch $RegEx)
+            {
+                Throw "Invalid Keyboard code.  Code must be in the format $RegEx"
+            }
+
             $LanguageSettings += "        <gs:InputLanguageID Action=`"remove`" ID=`"$LanguageID`"/>"
         }
         
         $LanguageSettings += "    </gs:InputPreferences>"
+    }
+    else
+    {
+        Write-Verbose "Keyboard Layout configuration not required"
     }
 
     if ($UserLocale -ne "")
@@ -225,6 +270,10 @@ Function Set-TargetResource
         $LanguageSettings += "    <gs:UserLocale>"
         $LanguageSettings += "        <gs:Locale Name=`"$UserLocale`" SetAsCurrent=`"true`" ResetAllSettings=`"true`"/>"
         $LanguageSettings += "    </gs:UserLocale>"
+    }
+    else
+    {
+        Write-Verbose "UserLocale configuration not required"
     }
 
     $LanguageSettings +=  "</gs:GlobalizationServices>"
@@ -334,8 +383,34 @@ Function Test-TargetResource
         [System.Boolean]
         $CopyNewUser
     )
+    #RegEX taken from implementation error output
+    $RegEx = '[0-9a-fA-F]{4}:[0-9a-fA-F]{8}|[0-9a-fA-F]{4}:\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}'
 
     $result = $true
+
+    if ($null -ne $AddInputLanguages)
+    {
+        #ensure that keyboard layouts are in the required format
+        foreach ($LanguageID in $AddInputLanguages)
+        {
+            if ($LanguageID -notmatch $RegEx)
+            {
+                Throw "Invalid Keyboard code.  Code must be in the format $RegEx"
+            }
+        }
+    }
+
+    if ($null -ne $RemoveInputLanguages)
+    {
+        #ensure that keyboard layouts are in the required format
+        foreach ($LanguageID in $RemoveInputLanguages)
+        {
+            if ($LanguageID -notmatch $RegEx)
+            {
+                Throw "Invalid Keyboard code.  Code must be in the format $RegEx"
+            }
+        }
+    }
 
     $CULocationID = Get-ItemPropertyValue "HKCU:\Control Panel\International\Geo\" -Name "Nation"
     Write-Verbose "Current User LocationID = $CULocationID type $($CULocationID.gettype())"
@@ -372,6 +447,19 @@ Function Test-TargetResource
     $CULanguages = Get-ItemPropertyValue "HKCU:\Control Panel\International\User Profile\" -Name "Languages"
     Write-Verbose "Currently Installed Languages = $CULanguages type $($CULanguages.gettype())"
 
+    [String[]]$CULanguageCodeList = @()
+
+    foreach ($Language in $CULanguages)
+    {
+        $LanguageProperties = Get-ItemProperty "HKCU:\Control Panel\International\User Profile\$Language\" -ErrorAction Stop
+        $LanguageCodeObj = $LanguageProperties | Get-Member -MemberType NoteProperty | Where-Object {$_.Name -Match $RegEx} -ErrorAction Stop
+        $LanguageCode = $LanguageCodeObj.Name
+        if ($null -ne $LanguageCode)
+        {
+            $CULanguageCodeList += $LanguageCode
+        }
+    }
+
     $CULocale = Get-ItemPropertyValue "HKCU:\Control Panel\International\" -Name "LocaleName"
     Write-Verbose "Current UserLocale = $CULocale type $($CULocale.gettype())"
 
@@ -396,6 +484,19 @@ Function Test-TargetResource
     $SYSLanguages = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\" -Name "Languages"
     Write-Verbose "System Currently Installed Languages = $SYSLanguages type $($SYSLanguages.gettype())"
 
+    [String[]]$SYSLanguageCodeList = @()
+
+    foreach ($Language in $SYSLanguages)
+    {
+        $LanguageProperties = Get-ItemProperty "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\$Language\" -ErrorAction Stop
+        $LanguageCodeObj = $LanguageProperties | Get-Member -MemberType NoteProperty | Where-Object {$_.Name -Match $RegEx} -ErrorAction Stop
+        $LanguageCode = $LanguageCodeObj.Name
+        if ($nulll -ne $LanguageCode)
+        {
+            $SYSLanguageCodeList += $LanguageCode
+        }
+    }
+
     $SYSLocale = Get-ItemPropertyValue "registry::hkey_Users\S-1-5-18\Control Panel\International\" -Name "LocaleName"
     Write-Verbose "System UserLocale = $SYSLocale type $($SYSLocale.gettype())"
 
@@ -419,6 +520,19 @@ Function Test-TargetResource
 
     $NULanguages = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\" -Name "Languages"
     Write-Verbose "New Installed Languages = $NULanguages type $($NULanguages.gettype())"
+
+    [String[]]$NULanguageCodeList = @()
+
+    foreach ($Language in $NULanguages)
+    {
+        $LanguageProperties = Get-ItemProperty "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\$Language\" -ErrorAction Stop
+        $LanguageCodeObj = $LanguageProperties | Get-Member -MemberType NoteProperty | Where-Object {$_.Name -Match $RegEx} -ErrorAction Stop
+        $LanguageCode = $LanguageCodeObj.Name
+        if ($null -ne $LanguageCode)
+        {
+            $NULanguageCodeList += $LanguageCode
+        }
+    }
 
     $NULocale = Get-ItemPropertyValue "registry::hkey_Users\.DEFAULT\Control Panel\International\" -Name "LocaleName"
     Write-Verbose "New UserLocale = $NULocale type $($NULocale.gettype())"
@@ -543,19 +657,20 @@ Function Test-TargetResource
         foreach($language in $AddInputLanguages)
         {
             #check if they are already on the system for the current user
-            if ($CULanguages -notcontains $language)
+            if ($CULanguageCodeList -notcontains $language)
             {
                 $result = $false
+                Write-Verbose "AddInputLanguages Current User requires update"
             }
 
             #Check System Account if also adding Languages
-            if ($CopySystem -eq $true -and $SYSLanguages -notcontains $language)
+            if ($CopySystem -eq $true -and $SYSLanguageCodeList -notcontains $language)
             {
                 $result = $false
             }
 
             #Check New User Account if also adding Languages
-            if ($CopyNewUser -eq $true -and $NULanguages -notcontains $language)
+            if ($CopyNewUser -eq $true -and $NULanguageCodeList -notcontains $language)
             {
                 $result = $false
             }
@@ -571,19 +686,19 @@ Function Test-TargetResource
     {
         foreach($language in $RemoveInputLanguages)
         {
-            if ($CULanguages -contains $language)
+            if ($CULanguageCodeList -contains $language)
             {
                 $result = $false
             }
 
             #Check System Account if also configuring System
-            if ($CopySystem -eq $true -and $SYSLanguages -contains $language)
+            if ($CopySystem -eq $true -and $SYSLanguageCodeList -contains $language)
             {
                 $result = $false
             }
 
             #Check New User Account if also configuring new users
-            if ($CopyNewUser -eq $true -and $NULanguages -contains $language)
+            if ($CopyNewUser -eq $true -and $NULanguageCodeList -contains $language)
             {
                 $result = $false
             }

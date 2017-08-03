@@ -11,8 +11,8 @@ configuration MSFT_Language_Config {
             MUILanguage = "en-GB" 
             MUIFallbackLanguage = "en-US"
             SystemLocale = "en-GB" 
-            AddInputLanguages = @("en-GB") 
-            RemoveInputLanguages = @("en-US")
+            AddInputLanguages = @("0809:00000809") 
+            RemoveInputLanguages = @("0409:00000409")
             UserLocale = "en-GB"
             CopySystem = $true 
             CopyNewUser = $true

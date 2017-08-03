@@ -12,7 +12,7 @@ $RemoveInputLanguages = New-xDscResourceProperty -Name "RemoveInputLanguages" -T
 $UserLocale = New-xDscResourceProperty -Name "UserLocale" -Type String -Attribute Write
 $CopySystem = New-xDscResourceProperty -Name "CopySystem" -Type Boolean -Attribute Write
 $CopyNewUser = New-xDscResourceProperty -Name "CopyNewUser" -Type Boolean -Attribute Write
-$CurrentInstalledLanguages = New-xDscResourceProperty -Name CurrentInstalledLanguages -Type String[] -Attribute Read
+$CurrentInstalledLanguages = New-xDscResourceProperty -Name CurrentInstalledLanguages -Type Hashtable -Attribute Read
 
 New-xDscResource -Name "MSFT_LanguagePack" -FriendlyName "LanguagePack" -Property $LanguagePackName, $LanguagePackLocation, $Ensure -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"
 

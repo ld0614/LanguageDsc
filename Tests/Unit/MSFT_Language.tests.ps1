@@ -52,14 +52,18 @@ try
         [String]$CurrentUIFallbackLanguage = "en-US"
         [String[]]$CurrentUIFallbackLanguageArray = @("en-US")
         $CurrentSystemLocale = "en-GB"
-        $CurrentInstalledLanguages = @("en-GB","en-US")
+        $CurrentInstalledLanguages = @{"en-US" = "0409:00000409"; "en-GB" = "0809:00000809"}
+        #$CurrentInstalledLanguagesEnglish = @("en-US","en-GB") # en-GB and en-US
+        #$CurrentInstalledLanguagesLCID = @("0809:00000809","0409:00000409") # en-GB and en-US
         $CurrentUserLocale = "en-GB"
-        $LanguageToRemove = "en-US"
+        $LanguageToRemove = "0409:00000409" # en-US
         $NewLocation = 58
         $NewUILanguage = "de-DE"
         $NewFallbackLanguage = "en-GB"
         $NewSystemLocale = "de-DE"
-        $LanguageToInstall = "de-DE"
+        $invalidLanguageID = "de-DE"
+        $invalidLanguageID2 = "en-US"
+        $LanguageToInstall = "0407:00000407" # de-DE
         $NewUserLocale = "de-DE"
         $ValidLocationConfig = '<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
     <gs:UserList>
@@ -74,8 +78,8 @@ try
     </gs:MUILanguagePreferences>
     <gs:SystemLocale Name="en-GB"/>
     <gs:InputPreferences>
-        <gs:InputLanguageID Action="add" ID="en-GB"/>
-        <gs:InputLanguageID Action="add" ID="en-US"/>
+        <gs:InputLanguageID Action="add" ID="0409:00000409"/>
+        <gs:InputLanguageID Action="add" ID="0809:00000809"/>
     </gs:InputPreferences>
     <gs:UserLocale>
         <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
@@ -96,7 +100,7 @@ try
     </gs:MUILanguagePreferences>
     <gs:SystemLocale Name="en-GB"/>
     <gs:InputPreferences>
-        <gs:InputLanguageID Action="remove" ID="en-US"/>
+        <gs:InputLanguageID Action="remove" ID="0409:00000409"/>
     </gs:InputPreferences>
     <gs:UserLocale>
         <gs:Locale Name="en-GB" SetAsCurrent="true" ResetAllSettings="true"/>
@@ -166,6 +170,9 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith {"Mock Required"}
+            Mock -CommandName Get-ItemProperty `
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith {"Mock Required"}
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\Geo\") -and ($Name -eq "Nation") }`
                 -ModuleName $($script:DSCResourceName) `
@@ -188,10 +195,31 @@ try
                 -MockWith { @{Name = $CurrentSystemLocale}} `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
-                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile") -and ($Name -eq "Languages") }`
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { $CurrentInstalledLanguages } `
+                -MockWith { $CurrentInstalledLanguages.Keys } `
                 -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\en-US\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0409:00000409" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\en-GB\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0809:00000809" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                -Verifiable
+            <# Code to dynamically create the required language Mocks based on the language hashtable
+            foreach ($Language in $CurrentInstalledLanguages.GetEnumerator())
+            {
+                Write-Verbose "Creating Mock: HKCU:\Control Panel\International\User Profile\$($Language.Key)\" -Verbose:$true
+                Mock -CommandName Get-ItemProperty `
+                    -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\$($Language.Key)\")}`
+                    -ModuleName $($script:DSCResourceName) `
+                    -MockWith { [PSCustomObject]@{($Language.Value) = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                    -Verifiable
+            }
+            #>
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International") -and ($Name -eq "LocaleName") }`
                 -ModuleName $($script:DSCResourceName) `
@@ -379,6 +407,9 @@ try
         Describe "$($script:DSCResourceName)\Test-TargetResource" {
 
             #Mock Current User
+            Mock -CommandName Get-ItemProperty `
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith {"Mock Required"}
             Mock -CommandName Get-ItemPropertyValue `
                 -ModuleName $($script:DSCResourceName) `
                 -MockWith {"Mock Required"}
@@ -404,7 +435,17 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { $CurrentInstalledLanguages } `
+                -MockWith { $CurrentInstalledLanguages.Keys } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\en-US\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0409:00000409" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\User Profile\en-GB\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0809:00000809" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "HKCU:\Control Panel\International\") -and ($Name -eq "LocaleName") }`
@@ -431,7 +472,17 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { $CurrentInstalledLanguages } `
+                -MockWith { $CurrentInstalledLanguages.Keys } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\en-US\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0409:00000409" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\User Profile\en-GB\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0809:00000809" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "registry::hkey_Users\S-1-5-18\Control Panel\International\") -and ($Name -eq "LocaleName") }`
@@ -458,7 +509,17 @@ try
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\") -and ($Name -eq "Languages") }`
                 -ModuleName $($script:DSCResourceName) `
-                -MockWith { $CurrentInstalledLanguages } `
+                -MockWith { $CurrentInstalledLanguages.Keys } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\en-US\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0409:00000409" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
+                -Verifiable
+            Mock -CommandName Get-ItemProperty `
+                -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\User Profile\en-GB\")}`
+                -ModuleName $($script:DSCResourceName) `
+                -MockWith { [PSCustomObject]@{"0809:00000809" = 1;CachedLanguageName = "@Winlangdb.dll,-1110"} } `
                 -Verifiable
             Mock -CommandName Get-ItemPropertyValue `
                 -ParameterFilter { ($Path -eq "registry::hkey_Users\.DEFAULT\Control Panel\International\") -and ($Name -eq "LocaleName") }`
@@ -487,6 +548,26 @@ try
                 }
             }
 
+            Context 'Throw as Invalid keyboard value Specified' {
+                
+                It 'Should throw exception' {
+                    {
+                        Test-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -AddInputLanguages $invalidLanguageID
+                    } | Should Throw
+                }
+
+                It 'Should throw exception' {
+                    {
+                        Test-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -RemoveInputLanguages $invalidLanguageID
+                    } | Should Throw
+                }
+                
+            }
+
             Context 'Require no changes to all accounts' {
                 $TestState = Test-TargetResource `
                     -IsSingleInstance "Yes" `
@@ -494,7 +575,7 @@ try
                     -MUILanguage $CurrentUILanguage `
                     -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                     -SystemLocale $CurrentSystemLocale `
-                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -AddInputLanguages $CurrentInstalledLanguages.Values `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $true `
                     -CopyNewUser $true `
@@ -508,7 +589,7 @@ try
                             -MUILanguage $CurrentUILanguage `
                             -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                             -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -AddInputLanguages $CurrentInstalledLanguages.Values `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
                             -CopyNewUser $true `
@@ -544,7 +625,7 @@ try
                     -MUILanguage $CurrentUILanguage `
                     -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                     -SystemLocale $CurrentSystemLocale `
-                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -AddInputLanguages $CurrentInstalledLanguages.Values `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $true `
                     -CopyNewUser $true `
@@ -558,11 +639,10 @@ try
                             -MUILanguage $CurrentUILanguage `
                             -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                             -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -AddInputLanguages $CurrentInstalledLanguages.Values `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true `
-                            -Verbose
+                            -CopyNewUser $true
                     } | Should Not Throw
                 }
 
@@ -627,7 +707,7 @@ try
                     -MUILanguage $CurrentUILanguage `
                     -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                     -SystemLocale $CurrentSystemLocale `
-                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -AddInputLanguages $CurrentInstalledLanguages.Values `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $false `
                     -CopyNewUser $false `
@@ -641,11 +721,10 @@ try
                             -MUILanguage $CurrentUILanguage `
                             -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                             -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -AddInputLanguages $CurrentInstalledLanguages.Values `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $false `
-                            -CopyNewUser $false `
-                            -Verbose
+                            -CopyNewUser $false
                     } | Should Not Throw
                 }
 
@@ -718,7 +797,7 @@ try
                     -MUILanguage $CurrentUILanguage `
                     -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                     -SystemLocale $CurrentSystemLocale `
-                    -AddInputLanguages $CurrentInstalledLanguages `
+                    -AddInputLanguages $CurrentInstalledLanguages.Values `
                     -UserLocale $CurrentUserLocale `
                     -CopySystem $true `
                     -CopyNewUser $true `
@@ -732,11 +811,10 @@ try
                             -MUILanguage $CurrentUILanguage `
                             -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                             -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -AddInputLanguages $CurrentInstalledLanguages.Values `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true `
-                            -Verbose
+                            -CopyNewUser $true
                     } | Should Not Throw
                 }
 
@@ -761,8 +839,57 @@ try
                 It 'Should throw exception' {
                     {
                         Set-TargetResource `
+                            -IsSingleInstance "Yes"
+                    } | Should Throw
+                }
+                It 'Should not call Out-File' {
+                    Assert-MockCalled `
+                        -CommandName Out-File `
+                        -ModuleName $($script:DSCResourceName) `
+                        -Exactly 0
+                }
+
+                It 'Should not call Start-Process' {
+                    Assert-MockCalled `
+                        -CommandName Start-Process `
+                        -ModuleName $($script:DSCResourceName) `
+                        -Exactly 0
+                }
+            }
+
+            Context 'Add Invalid Language Code Specified' {
+                Mock -CommandName Out-File `
+                    -ModuleName $($script:DSCResourceName)
+                It 'Should throw exception' {
+                    {
+                        Set-TargetResource `
                             -IsSingleInstance "Yes" `
-                            -Verbose
+                            -AddInputLanguages $invalidLanguageID
+                    } | Should Throw
+                }
+                It 'Should not call Out-File' {
+                    Assert-MockCalled `
+                        -CommandName Out-File `
+                        -ModuleName $($script:DSCResourceName) `
+                        -Exactly 0
+                }
+
+                It 'Should not call Start-Process' {
+                    Assert-MockCalled `
+                        -CommandName Start-Process `
+                        -ModuleName $($script:DSCResourceName) `
+                        -Exactly 0
+                }
+            }
+
+            Context 'Remove Invalid Language Code Specified' {
+                Mock -CommandName Out-File `
+                    -ModuleName $($script:DSCResourceName)
+                It 'Should throw exception' {
+                    {
+                        Set-TargetResource `
+                            -IsSingleInstance "Yes" `
+                            -RemoveInputLanguages $invalidLanguageID2
                     } | Should Throw
                 }
                 It 'Should not call Out-File' {
@@ -789,11 +916,10 @@ try
                             -MUILanguage $CurrentUILanguage `
                             -MUIFallbackLanguage $CurrentUIFallbackLanguage `
                             -SystemLocale $CurrentSystemLocale `
-                            -AddInputLanguages $CurrentInstalledLanguages `
+                            -AddInputLanguages $CurrentInstalledLanguages.Values `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true `
-                            -Verbose
+                            -CopyNewUser $true
                     } | Should not Throw
                 }
                 $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
@@ -812,12 +938,12 @@ try
                 }
 
                 #Useful when debugging XML Output
-                Write-Verbose "Known File Content:" -Verbose:$true
-                Write-Verbose $ValidLocationConfig -Verbose:$true
-                Write-Verbose "Known File Content Length: $($ValidLocationConfig.Length)" -Verbose:$true
-                Write-Verbose "Result File Content" -Verbose:$true
-                Write-Verbose $fileContent -Verbose:$true
-                Write-Verbose "Result File Content Length: $($fileContent.Length)" -Verbose:$true
+                #Write-Verbose "Known File Content:" -Verbose:$true
+                #Write-Verbose $ValidLocationConfig -Verbose:$true
+                #Write-Verbose "Known File Content Length: $($ValidLocationConfig.Length)" -Verbose:$true
+                #Write-Verbose "Result File Content" -Verbose:$true
+                #Write-Verbose $fileContent -Verbose:$true
+                #Write-Verbose "Result File Content Length: $($fileContent.Length)" -Verbose:$true
 
                 It 'Should call Start-Process' {
                     Assert-MockCalled `
@@ -828,7 +954,7 @@ try
             }
 
             Context 'Remove Language' {
-                                It 'Should not throw exception' {
+                It 'Should not throw exception' {
                     {
                         Set-TargetResource `
                             -IsSingleInstance "Yes" `
@@ -839,8 +965,7 @@ try
                             -RemoveInputLanguages $LanguageToRemove `
                             -UserLocale $CurrentUserLocale `
                             -CopySystem $true `
-                            -CopyNewUser $true `
-                            -Verbose
+                            -CopyNewUser $true
                     } | Should not Throw
                 }
                 $fileContent = Get-Content -Path "$env:TEMP\Locale.xml" | Out-String
@@ -857,12 +982,6 @@ try
                     #Whitespace doesn't matter to the xml file so avoid pester test issues by removing it all
                     ($fileContent.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0) -eq $ValidRemovalConfig.Replace([char]9,[char]0).Replace([char]13,[char]0).Replace([char]10,[char]0)) | Should be $true
                 }
-
-                #Useful when debugging XML Output
-                Write-Verbose "Known File Content" -Verbose:$true
-                Write-Verbose $ValidRemovalConfig -Verbose:$true
-                Write-Verbose "Result File Content" -Verbose:$true
-                Write-Verbose $fileContent -Verbose:$true
 
                 It 'Should call Start-Process' {
                     Assert-MockCalled `

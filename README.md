@@ -27,8 +27,8 @@ This resource will configure the user and system locales, display language (if a
 * **MUILanguage**: Display Language to use used eg. "en-GB"
 * **MUIFallbackLanguage**: Language Pack to be used when the primary language pack isn't complete  eg. "en-US"
 * **SystemLocale**:  Language name for the System Locale eg. "en-GB"
-* **AddInputLanguages**: PowerShell array of all active input Languages eg. @("en-GB")
-* **RemoveInputLanguages**:  PowerShell array of all input Languages to be removed @("en-US")
+* **AddInputLanguages**: Array of all input Languages to add, these must be in the long LCID format  eg. @("0809:00000809")
+* **RemoveInputLanguages**: Array of all input Languages to be removed, these must be in the long LCID format @("0409:00000409")
 * **UserLocale**:  Language name for the user Locale eg. "en-GB"
 * **CopySystem**: Copy the configuration to the system accounts eg. $true
 * **CopyNewUser**: Copy the configuration to all new user accounts eg. $true

@@ -1,12 +1,15 @@
-#Installs the latest version of Chrome in the language specified in the parameter Language.
-
 Configuration Example
 {
 
     Import-DscResource -Module LanguageDsc
 
-    Language ConfigureLanguage 
+    LanguagePack InstallLanguagePack
     {
+        LanguagePackName = "en-GB"
+        LanguagePackLocation = "\\fileserver1\LanguagePacks\"
+    }
+
+    Language ConfigureLanguage {
         IsSingleInstance = "Yes" 
         LocationID = 242 
         MUILanguage = "en-GB" 
@@ -17,5 +20,13 @@ Configuration Example
         UserLocale = "en-GB"
         CopySystem = $true 
         CopyNewUser = $true
+        Dependson = "[LanguagePack]InstallLanguagePack"
+    }
+
+    LocalConfigurationManager
+    {
+        RebootNodeIfNeeded = $true
+        ActionAfterReboot = 'ContinueConfiguration'
+        ConfigurationMode = 'ApplyAndAutoCorrect'
     }
 }

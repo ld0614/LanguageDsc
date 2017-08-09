@@ -89,6 +89,14 @@ Function Set-TargetResource
                     if (Test-Path -Path $LanguagePackLocation)
                     {
                         lpksetup.exe /i $LanguagePackName /p $LanguagePackLocation /r /a /s
+                        $startTime = Get-Date
+                        do
+                        {
+                            $Process = Get-Process -Name "lpksetup" -ErrorAction SilentlyContinue
+                            $currentTime = (Get-Date) - $startTime
+                            Write-Verbose "Waiting for Process to finish.  Time Taken: $($currentTime)"
+                            Start-Sleep -Seconds 10
+                        } while ($null -ne $Process)
                     }
                     else
                     {

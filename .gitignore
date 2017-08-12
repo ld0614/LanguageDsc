@@ -1,2 +1,5 @@
 DSCResource.Tests
+DSCResource.Tests/*
 .vs
+/DSCResource.Tests
+/DSCResource.Tests

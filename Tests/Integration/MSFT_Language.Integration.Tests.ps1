@@ -18,11 +18,58 @@ $TestEnvironment = Initialize-TestEnvironment `
 
 #endregion
 
-# TODO: Other Init Code Goes Here...
+Import-Module "$script:moduleRoot\DSCResources\$script:DSCResourceName\$script:DSCResourceName.psm1"
 
 # Using try/finally to always cleanup.
 try
 {
+    $LocationID = 242
+    $MUILanguage = "en-GB"
+    $MUIFallbackLanguage = 'en-US'
+    $SystemLocale = 'en-GB'
+    $AddInputLanguages = "0809:00000809"
+    $RemoveInputLanguages = "0409:00000409"
+    $UserLocale = "en-GB"
+
+    Describe "Pre-flight Checks" {
+        Context "Ensure System requires modification" {
+            $CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+            It "LocationID requires modification"        {
+                $CurrentState.LocationID | Should Not Be $LocationID
+            }
+
+            It "MUILanguage requires modification"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.MUILanguage | Should Not Be $MUILanguage
+            }
+
+            It "MUI Fallback Language requires modification"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.MUIFallbackLanguage | Should Not Be $MUIFallbackLanguage
+            }
+            
+            It "System Locale requires modification"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.SystemLocale | Should Not Be $SystemLocale
+            }
+
+            It "$AddInputLanguages keyboard is not already installed"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.CurrentInstalledLanguages.Values | Should Not Match $AddInputLanguages
+            }
+
+            It "$RemoveInputLanguages keyboard should be installed"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.CurrentInstalledLanguages.Values | Should Match $RemoveInputLanguages
+            }
+
+            It "User Locale requires modification"        {
+                #$CurrentState = Get-TargetResource -IsSingleInstance "Yes"
+                $CurrentState.UserLocale | Should Not Be $UserLocale
+            }
+        }
+    }
+
     #region Integration Tests
     $configFile = Join-Path -Path $PSScriptRoot -ChildPath "$($script:DSCResourceName).config.ps1"
     . $configFile
@@ -31,7 +78,14 @@ try
         #region DEFAULT TESTS
         It 'Should compile and apply the MOF without throwing' {
             {
-                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive
+                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive `
+                    -LocationID $LocationID `
+                    -MUILanguage $MUILanguage `
+                    -MUIFallbackLanguage $MUIFallbackLanguage `
+                    -SystemLocale $SystemLocale `
+                    -AddInputLanguages $AddInputLanguages `
+                    -RemoveInputLanguages $RemoveInputLanguages `
+                    -UserLocale $UserLocale
                 Start-DscConfiguration -Path $TestDrive `
                     -ComputerName localhost -Wait -Verbose -Force
             } | Should not throw
@@ -42,8 +96,17 @@ try
         }
         #endregion
 
-        It 'Should have set the resource and all the parameters should match' {
-            # TODO: Validate the Config was Set Correctly Here...
+        It 'Resource Test should return true' {
+            Test-TargetResource -IsSingleInstance "Yes" `
+                -LocationID $LocationID `
+                -MUILanguage $MUILanguage `
+                -MUIFallbackLanguage $MUIFallbackLanguage `
+                -SystemLocale $SystemLocale `
+                -AddInputLanguages $AddInputLanguages `
+                -RemoveInputLanguages $RemoveInputLanguages `
+                -UserLocale $UserLocale `
+                -CopySystem $true `
+                -CopyNewUser $true | Should Be $true
         }
     }
     #endregion

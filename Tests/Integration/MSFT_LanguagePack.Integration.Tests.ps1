@@ -17,21 +17,66 @@ $TestEnvironment = Initialize-TestEnvironment `
     -TestType Integration
 
 #endregion
-
-# TODO: Other Init Code Goes Here...
+Import-Module "$script:moduleRoot\DSCResources\$script:DSCResourceName\$script:DSCResourceName.psm1"
 
 # Using try/finally to always cleanup.
 try
 {
-    #region Integration Tests
-    $configFile = Join-Path -Path $PSScriptRoot -ChildPath "$($script:DSCResourceName).config.ps1"
-    . $configFile
+    $LanguagePackFolderLocation = "c:\LanguagePacks\"
+    $LanguagePackFileLocation = "c:\LanguagePacks\x64fre_Server_de-de_lp.cab"
+    $NewLanguagePackFromFolder = 'en-GB'
+    $NewLanguagePackFromFile = 'de-DE'
+    $RemoveLanguagePack = 'en-GB'
 
-    Describe "$($script:DSCResourceName)_Integration" -Tag "Integration" {
+    Describe "Pre-flight Checks" {
+
+        Context "Ensure Language Binaries are available" {
+            It "Language Pack Folder $LanguagePackFolderLocation Exists" {
+                Test-Path -Path $LanguagePackFolderLocation -PathType Container | Should Be $true
+            }
+
+            It "Language Pack Folder must include at least 1 cab file" {
+                (Get-ChildItem -Path $LanguagePackFolderLocation -Filter "*.cab").count | Should BeGreaterThan 0
+            }
+
+            It "Language Pack File Location must be a cab file" {
+                $LanguagePackFileLocation.EndsWith(".cab") | Should Be $true
+            }
+
+            It "Language Pack File Location must exist" {
+                Test-Path -Path $LanguagePackFileLocation -PathType Leaf | Should Be $true
+            }
+        }
+    
+
+        Context "Ensure System requires modification" {
+            It "New Language Pack $NewLanguagePackFromFolder mustn't be installed"        {
+                $CurrentState = Get-TargetResource -LanguagePackName $NewLanguagePackFromFolder
+                $CurrentState.ensure | Should Be "Absent"
+            }
+
+            It "New Language Pack $NewLanguagePackFromFile mustn't be installed"        {
+                $CurrentState = Get-TargetResource -LanguagePackName $NewLanguagePackFromFile
+                $CurrentState.ensure | Should Be "Absent"
+            }
+
+            It "Language Pack to be removed $RemoveLanguagePack must be installed"        {
+                $CurrentState = Get-TargetResource -LanguagePackName $RemoveLanguagePack
+                $CurrentState.ensure | Should Be "Present"
+            }
+        }
+    }
+
+    $configFile = Join-Path -Path $PSScriptRoot -ChildPath "$($script:DSCResourceName).config.ps1"
+    . $configFile 
+
+    #region Integration Tests
+    Describe "$($script:DSCResourceName) Folder Install Integration" -Tag "Integration" {
         #region DEFAULT TESTS
-        It 'Should compile and apply the MOF without throwing' {
+        It "Should compile and apply the MOF without throwing" {
             {
-                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive
+                Write-Verbose "Run Config" -Verbose:$true
+                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive -LangaugePackName $NewLanguagePackFromFolder -LangaugePackLocation $LanguagePackFolderLocation -Ensure "Present"
                 Start-DscConfiguration -Path $TestDrive `
                     -ComputerName localhost -Wait -Verbose -Force
             } | Should not throw
@@ -41,15 +86,55 @@ try
             { Get-DscConfiguration -Verbose -ErrorAction Stop } | Should Not throw
         }
         #endregion
-        InModuleScope 'MSFT_Language' {
-            It 'Should have set the resource and all the parameters should match' {
-                $currentConfig = Get-TargetResource -LanguagePackName "en-GB" -Verbose
-                $currentConfig.Ensure | Should Be $true
-            }
+
+        It 'Should have installed the language Pack' {
+            $currentConfig = Get-TargetResource -LanguagePackName $NewLanguagePackFromFolder -Verbose
+            $currentConfig.Ensure | Should Be $true
+        }
+    }
+
+    Describe "$($script:DSCResourceName) File Install Integration" -Tag "Integration" {
+        #region DEFAULT TESTS
+        It 'Should compile and apply the MOF without throwing' {
+            {
+                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive -LangaugePackName $NewLanguagePackFromFile -LangaugePackLocation $LanguagePackFileLocation -Ensure "Present"
+                Start-DscConfiguration -Path $TestDrive `
+                    -ComputerName localhost -Wait -Verbose -Force
+            } | Should not throw
+        }
+
+        It 'Should be able to call Get-DscConfiguration without throwing' {
+            { Get-DscConfiguration -Verbose -ErrorAction Stop } | Should Not throw
+        }
+        #endregion
+
+        It 'Should have installed the language Pack' {
+            $currentConfig = Get-TargetResource -LanguagePackName $NewLanguagePackFromFile -Verbose
+            $currentConfig.Ensure | Should Be $true
+        }
+    }
+
+    Describe "$($script:DSCResourceName) Language Pack Uninstall Integration" -Tag "Integration" {
+        #region DEFAULT TESTS
+        It 'Should compile and apply the MOF without throwing' {
+            {
+                & "$($script:DSCResourceName)_Config" -OutputPath $TestDrive -LangaugePackName $RemoveLanguagePack -Ensure "Absent"
+                Start-DscConfiguration -Path $TestDrive `
+                    -ComputerName localhost -Wait -Verbose -Force
+            } | Should not throw
+        }
+
+        It 'Should be able to call Get-DscConfiguration without throwing' {
+            { Get-DscConfiguration -Verbose -ErrorAction Stop } | Should Not throw
+        }
+        #endregion
+
+        It 'Should have removed the language Pack' {
+            $currentConfig = Get-TargetResource -LanguagePackName $RemoveLanguagePack -Verbose
+            $currentConfig.Ensure | Should Be $false
         }
     }
     #endregion
-
 }
 finally
 {

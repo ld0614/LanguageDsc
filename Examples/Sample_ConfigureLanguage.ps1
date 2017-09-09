@@ -2,20 +2,19 @@
 
 Configuration Example
 {
-
     Import-DscResource -Module LanguageDsc
 
-    Language ConfigureLanguage 
+    Language ConfigureLanguage
     {
-        IsSingleInstance = "Yes" 
-        LocationID = 242 
-        MUILanguage = "en-GB" 
+        IsSingleInstance = "Yes"
+        LocationID = 242
+        MUILanguage = "en-GB"
         MUIFallbackLanguage = "en-US"
-        SystemLocale = "en-GB" 
-        AddInputLanguages = @("0809:00000809") 
+        SystemLocale = "en-GB"
+        AddInputLanguages = @("0809:00000809")
         RemoveInputLanguages = @("0409:00000409")
         UserLocale = "en-GB"
-        CopySystem = $true 
+        CopySystem = $true
         CopyNewUser = $true
     }
 }

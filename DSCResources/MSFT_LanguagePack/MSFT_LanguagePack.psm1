@@ -83,36 +83,39 @@ Function Set-TargetResource
 
     switch ($Ensure) {
         'Present' {
-                if ($PSBoundParameters.ContainsKey('LanguagePackLocation'))
+            if ($PSBoundParameters.ContainsKey('LanguagePackLocation'))
+            {
+                Write-Verbose "Installing Language Pack"
+                if (Test-Path -Path $LanguagePackLocation)
                 {
-                    Write-Verbose "Installing Language Pack"
-                    if (Test-Path -Path $LanguagePackLocation)
-                    {
-                        lpksetup.exe /i $LanguagePackName /p $LanguagePackLocation /r /a /s
-                        $startTime = Get-Date
-                        do
-                        {
-                            $Process = Get-Process -Name "lpksetup" -ErrorAction SilentlyContinue
-                            $currentTime = (Get-Date) - $startTime
-                            Write-Verbose "Waiting for Process to finish.  Time Taken: $($currentTime)"
-                            Start-Sleep -Seconds 10
-                        } while ($null -ne $Process)
-                    }
-                    else
-                    {
-                        Throw "Invalid source Location"
-                    }
+                    lpksetup.exe /i $LanguagePackName /p $LanguagePackLocation /r /a /s
+                    $startTime = Get-Date
                 }
                 else
                 {
-                    Throw "Language Pack location must be specified when adding a new Language Pack"
+                    Throw "Invalid source Location"
                 }
             }
-        'Absent' {
-                Write-Verbose "Removing Language Pack"
-                lpksetup.exe /u $LanguagePackName /r /a /s
+            else
+            {
+                Throw "Language Pack location must be specified when adding a new Language Pack"
             }
+        }
+        'Absent' {
+            Write-Verbose "Removing Language Pack"
+            lpksetup.exe /u $LanguagePackName /r /a /s
+        }
+        default {
+            Throw "invalid operation"
+        }
     }
+    do
+    {
+        $Process = Get-Process -Name "lpksetup" -ErrorAction SilentlyContinue
+        $currentTime = (Get-Date) - $startTime
+        Write-Verbose "Waiting for Process to finish.  Time Taken: $($currentTime)"
+        Start-Sleep -Seconds 10
+    } while ($null -ne $Process)
     #Force a reboot after installing or removing a language pack
     $global:DSCMachineStatus = 1
 }

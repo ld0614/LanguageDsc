@@ -48,3 +48,13 @@ This resource will install or remove a single language pack from the target syst
 * Initial release with the following resources:
   * Language
   * LanguagePack
+
+## How to Test
+This resource is configured to exclude integration tests from its automated testing utilizing appveyor.  This is due to the external dependencies required for the langagePack Resource.  To configure a valid testing environment the following prerequisites are required:
+* Windows Server Operating System with en-US language installed
+* Git for Windows
+* C:\LanguagePacks must exist
+* en-GB (English-UK) Language Pack must be in C:\LanguagePacks
+* de-DE (German) Language Pack must be in C:\LanguagePacks
+
+These specifics can be controlled by modifying the MSFT_LanguagePack.Integration.Tests.ps1 file

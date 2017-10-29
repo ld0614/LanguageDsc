@@ -28,7 +28,7 @@ try
     $NewLanguagePackFromFile = 'de-DE'
     $RemoveLanguagePack = 'en-GB'
 
-    Describe "Pre-flight Checks" {
+    Describe "Pre-flight Checks" -Tag "Integration" {
 
         Context "Ensure Language Binaries are available" {
             It "Language Pack Folder $LanguagePackFolderLocation Exists" {

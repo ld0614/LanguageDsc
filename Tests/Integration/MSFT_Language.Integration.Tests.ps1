@@ -31,7 +31,7 @@ try
     $RemoveInputLanguages = "0409:00000409"
     $UserLocale = "en-GB"
 
-    Describe "Pre-flight Checks" {
+    Describe "Pre-flight Checks" -Tag "Integration" {
         Context "Ensure System requires modification" {
             $CurrentState = Get-TargetResource -IsSingleInstance "Yes"
             It "LocationID requires modification"        {

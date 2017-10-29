@@ -59,6 +59,12 @@ test_script:
     - ps: |
         Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "RebootRequired" -Verbose
         #Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "Integration" -Verbose
+    - cmd: >-
+        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\DSCResources\* -r
+        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\Examples\* -r
+        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LanguageDsc.psd1
+        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LICENSE
+        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\README.md
     
 #---------------------------------# 
 #      deployment configuration   # 
@@ -66,12 +72,6 @@ test_script:
 
 # scripts to run before deployment 
 deploy_script:
-    - cmd: >-
-        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\DSCResources\*
-        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\Examples\*
-        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LanguageDsc.psd1
-        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LICENSE
-        7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\README.md
     - ps: |
         Invoke-AppveyorAfterTestTask
 

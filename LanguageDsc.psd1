@@ -12,7 +12,7 @@
 # RootModule = ''
 
 # Version number of this module.
-ModuleVersion = '1.0'
+ModuleVersion = '1.0.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = "Leo D'Arcy"
 Copyright = "(c) 2017 Leo D'Arcy. All rights reserved."
 
 # Description of the functionality provided by this module
-# Description = ''
+ Description = 'DSC Module for managing the installation and removal of language packs and setting language settings on Windows operating systems'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '4.0'
@@ -75,7 +75,7 @@ FunctionsToExport = @()
 CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = '*'
+VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = @()
@@ -95,19 +95,19 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @("Language", "LanguageDSC", "LanguagePack", "DSC", "DesiredStateConfiguration", "DSCResource")
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/ld0614/LanguageDsc/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/ld0614/LanguageDsc'
 
         # A URL to an icon representing this module.
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        ReleaseNotes = 'Initial Release of LanguageDSC Module containing Language and LanguagePack resources'
 
     } # End of PSData hashtable
 

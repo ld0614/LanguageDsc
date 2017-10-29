@@ -71,17 +71,18 @@ Function Set-TargetResource
         [System.String]
         $LanguagePackName,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [System.String]
         $LanguagePackLocation,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateSet("Present","Absent")]
         [System.String]
         $Ensure="Present"
     )
 
-    switch ($Ensure) {
+    switch ($Ensure) 
+    {
         'Present' {
             if ($PSBoundParameters.ContainsKey('LanguagePackLocation'))
             {
@@ -145,11 +146,11 @@ Function Test-TargetResource
         [System.String]
         $LanguagePackName,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [System.String]
         $LanguagePackLocation,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateSet("Present","Absent")]
         [System.String]
         $Ensure="Present"
@@ -163,7 +164,8 @@ Function Test-TargetResource
 
     Write-Verbose "Language Pack Found: $Found"
 
-    switch ($Ensure) {
+    switch ($Ensure) 
+    {
         'Present' {
                 $result = $Found
             }

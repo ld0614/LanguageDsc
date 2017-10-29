@@ -50,7 +50,9 @@ This resource will install or remove a single language pack from the target syst
   * LanguagePack
 
 ## How to Test
+
 This resource is configured to exclude integration tests from its automated testing utilizing appveyor.  This is due to the external dependencies required for the langagePack Resource.  To configure a valid testing environment the following prerequisites are required:
+
 * Windows Server Operating System with en-US language installed
 * Git for Windows
 * C:\LanguagePacks must exist

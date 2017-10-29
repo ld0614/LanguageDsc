@@ -57,7 +57,7 @@ build: false
 
 test_script:
     - ps: |
-        Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -Verbose
+        Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "RebootRequired" -Verbose
         #Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "Integration" -Verbose
     
 #---------------------------------# 

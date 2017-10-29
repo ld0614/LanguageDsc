@@ -114,7 +114,7 @@ try
         }
     }
 
-    Describe "$($script:DSCResourceName) Language Pack Uninstall Integration" -Tag "Integration" {
+    Describe "$($script:DSCResourceName) Language Pack Uninstall Integration" -Tag "Integration","RebootRequired" {
         #region DEFAULT TESTS
         It 'Should compile and apply the MOF without throwing' {
             {

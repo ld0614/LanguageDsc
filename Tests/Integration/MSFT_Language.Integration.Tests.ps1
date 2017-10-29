@@ -74,7 +74,7 @@ try
     $configFile = Join-Path -Path $PSScriptRoot -ChildPath "$($script:DSCResourceName).config.ps1"
     . $configFile
 
-    Describe "$($script:DSCResourceName)_Integration" -Tag "Integration" {
+    Describe "$($script:DSCResourceName)_Integration" -Tag "Integration","RebootRequired" {
         #region DEFAULT TESTS
         It 'Should compile and apply the MOF without throwing' {
             {

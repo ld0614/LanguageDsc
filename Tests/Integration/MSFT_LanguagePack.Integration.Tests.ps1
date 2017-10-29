@@ -26,7 +26,7 @@ try
     $LanguagePackFileLocation = "c:\LanguagePacks\x64fre_Server_de-de_lp.cab"
     $NewLanguagePackFromFolder = 'en-GB'
     $NewLanguagePackFromFile = 'de-DE'
-    $RemoveLanguagePack = 'en-GB'
+    $RemoveLanguagePack = 'en-US'
 
     Describe "Pre-flight Checks" -Tag "Integration" {
 
@@ -89,7 +89,7 @@ try
 
         It 'Should have installed the language Pack' {
             $currentConfig = Get-TargetResource -LanguagePackName $NewLanguagePackFromFolder -Verbose
-            $currentConfig.Ensure | Should Be $true
+            $currentConfig.Ensure | Should Be "Present"
         }
     }
 
@@ -110,7 +110,7 @@ try
 
         It 'Should have installed the language Pack' {
             $currentConfig = Get-TargetResource -LanguagePackName $NewLanguagePackFromFile -Verbose
-            $currentConfig.Ensure | Should Be $true
+            $currentConfig.Ensure | Should Be "Present"
         }
     }
 
@@ -131,7 +131,7 @@ try
 
         It 'Should have removed the language Pack' {
             $currentConfig = Get-TargetResource -LanguagePackName $RemoveLanguagePack -Verbose
-            $currentConfig.Ensure | Should Be $false
+            $currentConfig.Ensure | Should Be "Absent"
         }
     }
     #endregion

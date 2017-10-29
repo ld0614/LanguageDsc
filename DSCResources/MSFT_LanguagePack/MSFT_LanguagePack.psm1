@@ -80,6 +80,7 @@ Function Set-TargetResource
         [System.String]
         $Ensure="Present"
     )
+    $timeout = 7200
 
     switch ($Ensure) 
     {
@@ -105,6 +106,7 @@ Function Set-TargetResource
         'Absent' {
             Write-Verbose "Removing Language Pack"
             lpksetup.exe /u $LanguagePackName /r /a /s
+            $startTime = Get-Date
         }
         default {
             Throw "invalid operation"
@@ -114,6 +116,10 @@ Function Set-TargetResource
     {
         $Process = Get-Process -Name "lpksetup" -ErrorAction SilentlyContinue
         $currentTime = (Get-Date) - $startTime
+        if ($currentTime.TotalSeconds -gt $timeout)
+        {
+            throw "Process did not complete in under $timeout seconds"
+        }
         Write-Verbose "Waiting for Process to finish.  Time Taken: $($currentTime)"
         Start-Sleep -Seconds 10
     } while ($null -ne $Process)

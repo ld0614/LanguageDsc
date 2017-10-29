@@ -68,3 +68,20 @@ test_script:
 deploy_script:
     - ps: |
         Invoke-AppveyorAfterTestTask
+
+
+#---------------------------------# 
+#      artifact configuration     # 
+#---------------------------------# 
+
+after_build:
+- cmd: >-
+    7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\DSCResources\*
+    7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\Examples\*
+    7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LanguageDsc.psd1
+    7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LICENSE
+    7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\README.md
+
+artifacts:
+- path: LanguageDsc.zip
+  name: LanguageDsc.zip

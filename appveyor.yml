@@ -7,6 +7,39 @@
 #      environment configuration  # 
 #---------------------------------# 
 version: 1.0.{build}.0 # TODO Modify version
+
+image: Visual Studio 2017
+init:
+#init script to download binaries required for integration testing
+- ps: >-
+    $LanguagePackFolderLocation = "c:\LanguagePacks\"
+
+    $LanguagePackFileLocation = "c:\LanguagePacks\x64fre_Server_de-de_lp.cab"
+
+    $StorageAccountName = "languageddsctesting"
+
+    $ContainerName = "intergrationtesting"
+
+
+    New-Item -Path $LanguagePackFolderLocation -ItemType Directory
+
+    $RESTResult = Invoke-RestMethod "https://$StorageAccountName.blob.core.windows.net/$($ContainerName)?restype=container&comp=list" -Method Get
+
+    [XML]$RESTResult = $RESTResult.Substring(3) #trim random chars off front
+
+    [XML]$XMLResult = $RESTResult
+
+    $reader=(New-Object System.Xml.XmlNodeReader $RESTResult)
+
+
+    foreach ($Blob in $XMLResult.EnumerationResults.Blobs.GetEnumerator())
+
+    {
+        $OutputFile = Join-Path -Path $LanguagePackFolderLocation -ChildPath $Blob.Name
+        (New-Object System.Net.WebClient).DownloadFile($Blob.Url, $OutputFile)
+    }
+
+
 install:
     - git clone https://github.com/PowerShell/DscResource.Tests
     - ps: Import-Module "$env:APPVEYOR_BUILD_FOLDER\DscResource.Tests\AppVeyor.psm1"

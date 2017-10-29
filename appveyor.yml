@@ -61,9 +61,13 @@ test_script:
         #Invoke-AppveyorTestScriptTask -CodeCoverage -CodeCovIo -ExcludeTag "Integration" -Verbose
     - cmd: >-
         7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\DSCResources\* -r
+    - cmd: >-
         7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\Examples\* -r
+    - cmd: >-
         7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LanguageDsc.psd1
+    - cmd: >-
         7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\LICENSE
+    - cmd: >-
         7z a LanguageDsc.zip %APPVEYOR_BUILD_FOLDER%\README.md
     
 #---------------------------------# 

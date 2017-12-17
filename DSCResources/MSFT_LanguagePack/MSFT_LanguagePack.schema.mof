@@ -4,6 +4,7 @@ class MSFT_LanguagePack : OMI_BaseResource
 {
     [Key] String LanguagePackName;
     [Write] String LanguagePackLocation;
+    [Write] Boolean SuppressReboot;
     [Write, ValueMap{"Present","Absent"}, Values{"Present","Absent"}] String Ensure;
 };
 

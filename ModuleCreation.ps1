@@ -1,5 +1,6 @@
 $LanguagePackName = New-xDscResourceProperty -Name "LanguagePackName" -Type String -Attribute Key
 $LanguagePackLocation = New-xDscResourceProperty -Name "LanguagePackLocation" -Type String -Attribute Write
+$SuppressReboot = New-xDscResourceProperty -Name "SuppressReboot" -Type Boolean -Attribute Write
 $Ensure = New-xDscResourceProperty –Name Ensure -Type String -Attribute Write –ValidateSet “Present”, “Absent”
 
 $IsSingleInstance = New-xDscResourceProperty -Name "IsSingleInstance" -Type String -Attribute Key -ValidateSet “Yes”
@@ -14,6 +15,6 @@ $CopySystem = New-xDscResourceProperty -Name "CopySystem" -Type Boolean -Attribu
 $CopyNewUser = New-xDscResourceProperty -Name "CopyNewUser" -Type Boolean -Attribute Write
 $CurrentInstalledLanguages = New-xDscResourceProperty -Name CurrentInstalledLanguages -Type Hashtable -Attribute Read
 
-New-xDscResource -Name "MSFT_LanguagePack" -FriendlyName "LanguagePack" -Property $LanguagePackName, $LanguagePackLocation, $Ensure -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"
+New-xDscResource -Name "MSFT_LanguagePack" -FriendlyName "LanguagePack" -Property $LanguagePackName, $LanguagePackLocation, $SuppressReboot, $Ensure -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"
 
 New-xDscResource -Name "MSFT_Language" -FriendlyName "Language" -Property $IsSingleInstance, $LocationID, $MUILanguage, $MUIFallbackLanguage, $SystemLocale, $AddInputLanguages, $RemoveInputLanguages, $UserLocale, $CopySystem, $CopyNewUser, $CurrentInstalledLanguages -Path "C:\Temp\DSCResources" -ModuleName "LanguageDsc"

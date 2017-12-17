@@ -9,6 +9,9 @@
     .PARAMETER LanguagePackLocation
         Not used in Get-TargetResource.
 
+    .PARAMETER SuppressReboot
+        Not used in Get-TargetResource.
+
     .PARAMETER Ensure
         Not used in Get-TargetResource.
 #>
@@ -39,6 +42,7 @@ Function Get-TargetResource
 
     $returnValue = @{
         LanguagePackName = [System.String]$LanguagePackName
+        SuppressReboot = [Boolean]$false
         Ensure = [System.String]$ensure
     }
 
@@ -55,6 +59,10 @@ Function Get-TargetResource
     .PARAMETER LanguagePackLocation
         Either Local or Remote path to the language pack cab file.  This is only used
         when installing a language pack
+
+    .PARAMETER SuppressReboot
+        If set to true the reboot required flag isn't set after successful installation of a 
+        language pack, this can be useful to save time when installing multiple language packs.
 
     .PARAMETER Ensure
         Indicates whether the given language pack should be installed or uninstalled.
@@ -74,6 +82,10 @@ Function Set-TargetResource
         [Parameter()]
         [System.String]
         $LanguagePackLocation,
+
+        [Parameter()]
+        [Boolean]
+        $SuppressReboot=$false,
 
         [Parameter()]
         [ValidateSet("Present","Absent")]
@@ -123,8 +135,13 @@ Function Set-TargetResource
         Write-Verbose "Waiting for Process to finish.  Time Taken: $($currentTime)"
         Start-Sleep -Seconds 10
     } while ($null -ne $Process)
-    #Force a reboot after installing or removing a language pack
-    $global:DSCMachineStatus = 1
+
+    #allow for suppression to install multiple language packs at the same time to save time
+    if ($SuppressReboot -ne $true)
+    {
+        #Force a reboot after installing or removing a language pack
+        $global:DSCMachineStatus = 1
+    }
 }
 
 <#
@@ -136,6 +153,10 @@ Function Set-TargetResource
     
     .PARAMETER LanguagePackLocation
         Not used in Test-TargetResource.
+
+    .PARAMETER SuppressReboot
+        If set to true the reboot required flag isn't set after successful installation of a 
+        language pack, this can be useful to save time when installing multiple language packs.
 
     .PARAMETER Ensure
         Indicates whether the given language pack should be present or absent.
@@ -155,6 +176,10 @@ Function Test-TargetResource
         [Parameter()]
         [System.String]
         $LanguagePackLocation,
+        
+        [Parameter()]
+        [Boolean]
+        $SuppressReboot=$false,
 
         [Parameter()]
         [ValidateSet("Present","Absent")]
